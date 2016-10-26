@@ -57,7 +57,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	}
 
 	metaHeaders := map[string][]string{}
-	tlsConfig := tlsconfig.ServerDefault
+	tlsConfig := tlsconfig.ServerDefault()
 	//TODO(jgsqware): fix TLS
 	tlsConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
 
@@ -74,7 +74,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		Version:      registry.APIVersion2,
 		Official:     false,
 		TrimHostname: true,
-		TLSConfig:    &tlsConfig,
+		TLSConfig:    tlsConfig,
 	}
 	ctx := context.Background()
 	repo, _, err := distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)

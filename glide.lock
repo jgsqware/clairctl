@@ -1,5 +1,5 @@
-hash: 4b09d3a6e622b6ff73506752aaf5996846d5541d8d20d0c93a5d1ce5e856a01a
-updated: 2016-10-26T07:12:57.945134969+02:00
+hash: a7ccb098ac6c0cd847c8a67cfdc8267971ea01bb3b8bd020457b48817b62574c
+updated: 2016-10-26T12:02:37.277593384+02:00
 imports:
 - name: github.com/artyom/untar
   version: 02ed5a2449a661eb02b1e3d658524223ab726412
@@ -33,7 +33,7 @@ imports:
   - capnslog
   - timeutil
 - name: github.com/docker/distribution
-  version: 12acdf0a6c1e56d965ac6eb395d2bce687bf22fc
+  version: fbb70dc3a14ca65cdac3aaf5e5122b03b42f6fbc
   subpackages:
   - context
   - digest
@@ -51,7 +51,7 @@ imports:
   - registry/storage/cache/memory
   - uuid
 - name: github.com/docker/docker
-  version: 7e24c16086a9a4f38e241e51837f2be4877c04a6
+  version: 62ff3e90835c3c572051afbbbac53303e57a5c89
   subpackages:
   - api
   - api/server/httputils
@@ -106,13 +106,13 @@ imports:
   - reference
   - registry
 - name: github.com/docker/go-connections
-  version: 990a1a1a70b0da4c4cb70e117971a4f0babfbf1a
+  version: 988efe982fdecb46f01d53465878ff1f2ff411ce
   subpackages:
   - nat
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-  version: 8a7beacffa3009a9ac66bad506b18ffdd110cf97
+  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
 - name: github.com/docker/libtrust
   version: fa567046d9b14f6aa788882a950d69651d230b21
 - name: github.com/fernet/fernet-go
@@ -161,7 +161,7 @@ imports:
 - name: github.com/mitchellh/mapstructure
   version: 482a9fd5fa83e8c4e7817413b80f3eb8feec03ef
 - name: github.com/opencontainers/runc
-  version: d6b68e8a60c79a1a78a0d9324bbbf580a3eba0f8
+  version: 157a96a42860b16b50401d131e257c7d7f281d7b
   subpackages:
   - libcontainer/system
   - libcontainer/user
@@ -190,7 +190,7 @@ imports:
 - name: github.com/prometheus/procfs
   version: 406e5b7bfd8201a36e2bb5f7bdae0b03380c2ce8
 - name: github.com/Sirupsen/logrus
-  version: 55eb11d21d2a31a3cc93838241d04800f52e823d
+  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:
@@ -203,7 +203,7 @@ imports:
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
-  version: 5644820622454e71517561946e3d94b9f9db6842
+  version: 7597b2702729ebb651fc9bb2adac40bcc62db82d
 - name: github.com/spf13/viper
   version: 80ab6657f9ec7e5761f6603320d3d58dfe6970f6
 - name: github.com/vbatts/tar-split
@@ -213,20 +213,21 @@ imports:
   - tar/asm
   - tar/storage
 - name: golang.org/x/crypto
-  version: c10c31b5e94b6f7a0283272dc2bb27163dcea24b
+  version: ca7e7f10cb9fd9c1a6ff7f60436c086d73714180
   subpackages:
-  - bcrypt
-  - blowfish
-  - ocsp
+  - curve25519
+  - ed25519
+  - ed25519/internal/edwards25519
   - ssh
 - name: golang.org/x/net
-  version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
+  version: d4c55e66d8c3a2f3382d264b08e3e3454a66355a
   subpackages:
   - context
   - context/ctxhttp
   - http2
   - http2/hpack
   - internal/timeseries
+  - lex/httplex
   - proxy
   - trace
 - name: golang.org/x/sys

@@ -9,19 +9,20 @@ import:
   - api/v1
   - utils/types
 - package: github.com/docker/distribution
-  version: ^2.5.1
+  version: fbb70dc3a14ca65cdac3aaf5e5122b03b42f6fbc
   subpackages:
   - digest
   - manifest/schema1
   - registry/client
 - package: github.com/docker/go-connections
-  version: ^0.2.1
+  version: 988efe982fdecb46f01d53465878ff1f2ff411ce
   subpackages:
   - tlsconfig
 - package: github.com/fsouza/go-dockerclient
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: golang.org/x/net
+  version: d4c55e66d8c3a2f3382d264b08e3e3454a66355a
   subpackages:
   - context
 - package: gopkg.in/yaml.v2
@@ -35,3 +36,7 @@ import:
   - distribution
   - reference
   - registry
+- package: github.com/spf13/pflag
+  version: 7597b2702729ebb651fc9bb2adac40bcc62db82d
+- package: golang.org/x/crypto
+  version: ca7e7f10cb9fd9c1a6ff7f60436c086d73714180

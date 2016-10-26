@@ -1,17 +1,22 @@
 language: go
 go:
-- 1.5
-install:
-- go get -d -v ./...
+- 1.7
+ install:
+ - go get -v github.com/Masterminds/glide
+ - cd $GOPATH/src/github.com/Masterminds/glide && git checkout tags/0.10.2 && go install && cd -
+ - glide install -v
+
+script:
 - go build -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)" -v
+
 deploy:
   provider: releases
   api_key:
     secure: SPeZzw212p/0iYPLVWUkLq226j19oWHBogHIlbKzkp8zNk7tdJEHMthAhka1zxS5afr+JWu3BBdduPHbnvvpXtv2axsrCXVsW7jPEcxXgfM3m/YSxQwjsGojMG318nX/E5ApY8eDhiZuHoTAP67DJZEoLteV5GKvNk7np74bMNexBxCPDIbXepBbjrEqxrUG/uVDFrmFf0LlCKVGxALK42uriaDM1tPGDy0+7zX7a3RqG9J4ROmZCQNzd9+rcur4DndrxYPCvJK3awUwXL5XzdRed24m5S8IG6Q/gMMUhUVECMNZ6/Z+KZ4CKqcQ9e9NvOtHYvO0OtPNrd4/HajZpUpfO008imSj6/g9NxdC6hJYvyK/HuRv5DsLgZukyvwroVSM5rC77FJeOmoLXfEBHo7E16I5XKGcp31NoCv5kdQuaHLxkBZk43CcnT/rraQ8cjCQAERQEh6u0fidyOvZ4vkTW30/c6H25zDejCzDcx1oHL4O8QwJwMfRSifSA8vk81saOurmQeviZK1UkpeWLxMYLpFZ8vN9kK/2Nn24ud9DN7N8bqGob13I8lJ69j9xcXuq/86vITziESZCHaYs2Hw1vSHD8vpkQxu8aSYqPXgwAKDwV9JkGV1/kcUdwpOlD/xkKunluu8Mf5K2JSm9G8xWr6foOibKsuHDn0nH+jY=
-  file: hyperclair
+  file: clairctl
   skip_cleanup: true
   on:
-    repo: wemanity-belgium/hyperclair
+    repo: jgsqware/clairctl
     tags: true
     branch: master
 env:

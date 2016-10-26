@@ -1,10 +1,11 @@
 language: go
 go:
-- 1.7
- install:
- - go get -v github.com/Masterminds/glide
- - cd $GOPATH/src/github.com/Masterminds/glide && git checkout tags/0.10.2 && go install && cd -
- - glide install -v
+  - 1.7
+
+install:
+  - go get -v github.com/Masterminds/glide
+  - cd $GOPATH/src/github.com/Masterminds/glide && git checkout tags/0.10.2 && go install && cd -
+  - glide install -v
 
 script:
 - go build -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)" -v

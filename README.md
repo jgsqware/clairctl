@@ -1,4 +1,5 @@
 # clairctl
+[![Build Status](https://travis-ci.org/jgsqware/clairctl.svg?branch=master)](https://travis-ci.org/jgsqware/clairctl)
 
 > Tracking container vulnerabilities with Clair Control
 

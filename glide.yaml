@@ -1,0 +1,37 @@
+package: github.com/jgsqware/clairctl
+import:
+- package: github.com/Sirupsen/logrus
+  version: ^0.10.0
+- package: github.com/artyom/untar
+- package: github.com/coreos/clair
+  version: ^1.2.5
+  subpackages:
+  - api/v1
+  - utils/types
+- package: github.com/docker/distribution
+  version: ^2.5.1
+  subpackages:
+  - digest
+  - manifest/schema1
+  - registry/client
+- package: github.com/docker/go-connections
+  version: ^0.2.1
+  subpackages:
+  - tlsconfig
+- package: github.com/fsouza/go-dockerclient
+- package: github.com/spf13/cobra
+- package: github.com/spf13/viper
+- package: golang.org/x/net
+  subpackages:
+  - context
+- package: gopkg.in/yaml.v2
+- package: github.com/docker/go-units
+  version: ^0.3.1
+- package: github.com/docker/docker
+  version: 62ff3e90835c3c572051afbbbac53303e57a5c89
+  subpackages:
+  - api/types
+  - cliconfig
+  - distribution
+  - reference
+  - registry

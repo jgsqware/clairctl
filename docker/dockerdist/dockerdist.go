@@ -18,12 +18,14 @@ package dockerdist
 
 import (
 	"errors"
-	"log"
 	"net/url"
+	"reflect"
 
+	log "github.com/Sirupsen/logrus"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cliconfig"
@@ -31,7 +33,6 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
 	"github.com/docker/go-connections/tlsconfig"
-	"github.com/spf13/viper"
 
 	"golang.org/x/net/context"
 )
@@ -55,23 +56,25 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		indexInfo,
 		false,
 	}
-
 	metaHeaders := map[string][]string{}
 	tlsConfig := tlsconfig.ServerDefault()
 	//TODO(jgsqware): fix TLS
-	tlsConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
+	tlsConfig.InsecureSkipVerify = true //viper.GetBool("auth.insecureSkipVerify")
+
+	log.Debugf("Hostname: %v", registry.DefaultV2Registry)
 
 	url, err := url.Parse("https://" + image.Hostname())
 	if insecure {
 		url, err = url.Parse("http://" + image.Hostname())
 	}
+
 	if err != nil {
 		return nil, err
 	}
 
 	endpoint := registry.APIEndpoint{
-		URL:          url,
-		Version:      registry.APIVersion2,
+		URL:          registry.DefaultV1Registry,
+		Version:      registry.APIVersion1,
 		Official:     false,
 		TrimHostname: true,
 		TLSConfig:    tlsConfig,
@@ -86,7 +89,6 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 	if withDigest, ok := image.(reference.Canonical); ok {
 		return withDigest.Digest(), nil
 	}
-
 	// Get TagService.
 	tagSvc := repo.Tags(ctx)
 
@@ -95,6 +97,7 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 	if withTag, ok := image.(reference.NamedTagged); ok {
 		tag = withTag.Tag()
 	}
+	log.Debugf("tag: %v", tag)
 
 	// Get Tag's Descriptor.
 	descriptor, err := tagSvc.Get(ctx, tag)
@@ -121,7 +124,6 @@ func GetAuthCredentials(image string) (types.AuthConfig, error) {
 	if err != nil {
 		return types.AuthConfig{}, err
 	}
-
 	// Retrieve the user's Docker configuration file (if any).
 	configFile, err := cliconfig.Load(cliconfig.ConfigDir())
 	if err != nil {
@@ -167,12 +169,16 @@ func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Man
 	}
 
 	// Verify the manifest if it's signed.
+	log.Debugf("manifest type: %v", reflect.TypeOf(manifest))
+
 	switch manifest.(type) {
 	case *schema1.SignedManifest:
 		_, verr := schema1.Verify(manifest.(*schema1.SignedManifest))
 		if verr != nil {
 			return nil, nil, verr
 		}
+	case *schema2.DeserializedManifest:
+		log.Debugf("retrieved schema2 manifest")
 	default:
 		log.Printf("Could not verify manifest for image %v: not signed", image)
 	}

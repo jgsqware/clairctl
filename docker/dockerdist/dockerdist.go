@@ -18,7 +18,6 @@ package dockerdist
 
 import (
 	"errors"
-	"net/url"
 	"reflect"
 
 	log "github.com/Sirupsen/logrus"
@@ -30,9 +29,10 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/distribution"
+	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
-	"github.com/docker/go-connections/tlsconfig"
+	"github.com/spf13/viper"
 
 	"golang.org/x/net/context"
 )
@@ -40,48 +40,60 @@ import (
 // getRepositoryClient returns a client for performing registry operations against the given named
 // image.
 func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
-	// Lookup the index information for the name.
-	indexInfo, err := registry.ParseSearchIndexInfo(image.String())
-	if err != nil {
-		return nil, err
-	}
 
+	service := registry.NewService(registry.ServiceOptions{})
+
+	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
 	if err != nil {
+		log.Debugf("GetAuthCredentials error: %v", err)
 		return nil, err
 	}
 
-	repoInfo := &registry.RepositoryInfo{
-		image,
-		indexInfo,
-		false,
-	}
-	metaHeaders := map[string][]string{}
-	tlsConfig := tlsconfig.ServerDefault()
-	//TODO(jgsqware): fix TLS
-	tlsConfig.InsecureSkipVerify = true //viper.GetBool("auth.insecureSkipVerify")
+	userAgent := dockerversion.DockerUserAgent(ctx)
 
-	log.Debugf("Hostname: %v", registry.DefaultV2Registry)
-
-	url, err := url.Parse("https://" + image.Hostname())
-	if insecure {
-		url, err = url.Parse("http://" + image.Hostname())
+	_, _, err = service.Auth(ctx, &authConfig, userAgent)
+	if err != nil {
+		log.Debugf("Auth: err: %v", err)
+		return nil, err
 	}
+
+	repoInfo, err := service.ResolveRepository(image)
 
 	if err != nil {
+		log.Debugf("ResolveRepository err: %v", err)
 		return nil, err
 	}
 
-	endpoint := registry.APIEndpoint{
-		URL:          registry.DefaultV1Registry,
-		Version:      registry.APIVersion1,
-		Official:     false,
-		TrimHostname: true,
-		TLSConfig:    tlsConfig,
+	metaHeaders := map[string][]string{}
+
+	endpoints, err := service.LookupPullEndpoints(image.Hostname())
+
+	if err != nil {
+		log.Debugf("registry.LookupPullEndpoints error: %v", err)
+		return nil, err
 	}
-	ctx := context.Background()
-	repo, _, err := distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
-	return repo, err
+	var confirmedV2 bool
+	var repository distlib.Repository
+
+	for _, endpoint := range endpoints {
+		if confirmedV2 && endpoint.Version == registry.APIVersion1 {
+			log.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
+			continue
+		}
+		endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
+		// TODO: reuse contexts
+		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
+		if err != nil {
+			return nil, err
+		}
+		if !confirmedV2 {
+			return nil, errors.New("Only V2 repository are supported")
+		}
+		break
+	}
+
+	return repository, nil
 }
 
 // getDigest returns the digest for the given image.

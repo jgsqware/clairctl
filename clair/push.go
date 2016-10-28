@@ -16,7 +16,6 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/xstrings"
-	"github.com/prometheus/common/log"
 )
 
 // ErrUnanalizedLayer is returned when the layer was not correctly analyzed
@@ -29,7 +28,8 @@ func Push(image reference.Named, manifest distribution.Manifest) error {
 	case *schema1.SignedManifest:
 		return V1Push(image, manifest.(schema1.SignedManifest))
 	case *schema2.DeserializedManifest:
-		log.Debugf("retrieved schema2 manifest")
+		return errors.New("Schema version 2 is not supported yet")
+
 	}
 	return nil
 }

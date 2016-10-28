@@ -82,7 +82,10 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 			continue
 		}
 		endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
-		// TODO: reuse contexts
+		if insecure {
+			endpoint.URL.Scheme = "http"
+		}
+
 		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
 		if err != nil {
 			return nil, err
@@ -109,7 +112,6 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 	if withTag, ok := image.(reference.NamedTagged); ok {
 		tag = withTag.Tag()
 	}
-	log.Debugf("tag: %v", tag)
 
 	// Get Tag's Descriptor.
 	descriptor, err := tagSvc.Get(ctx, tag)
@@ -190,7 +192,7 @@ func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Man
 			return nil, nil, verr
 		}
 	case *schema2.DeserializedManifest:
-		log.Debugf("retrieved schema2 manifest")
+		log.Debugf("retrieved schema2 manifest, no verification")
 	default:
 		log.Printf("Could not verify manifest for image %v: not signed", image)
 	}

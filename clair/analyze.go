@@ -14,7 +14,6 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/xstrings"
-	"github.com/prometheus/common/log"
 )
 
 //Analyze return Clair Image analysis
@@ -23,7 +22,8 @@ func Analyze(image reference.Named, manifest distribution.Manifest) ImageAnalysi
 	case *schema1.SignedManifest:
 		return Analyze(image, manifest.(schema1.SignedManifest))
 	case *schema2.DeserializedManifest:
-		log.Debugf("retrieved schema2 manifest")
+		logrus.Fatalf("Schema version 2 is not supported yet")
+
 	}
 	return ImageAnalysis{}
 }

@@ -23,6 +23,7 @@ import (
 var ErrLoginNotFound = errors.New("user is not log in")
 
 var IsLocal = false
+var Insecure = false
 
 var ImageName string
 

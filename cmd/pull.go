@@ -67,5 +67,6 @@ var pullCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(pullCmd)
+	pullCmd.Flags().BoolVarP(&config.Insecure, "insecure", "i", false, "use an insecure registry")
 	pullCmd.Flags().BoolVarP(&config.IsLocal, "local", "l", false, "Use local images")
 }

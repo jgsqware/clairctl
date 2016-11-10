@@ -10,10 +10,12 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
+	"github.com/docker/distribution"
+	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/manifest/schema2"
+	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/xstrings"
-	"github.com/docker/distribution/manifest/schema1"
-	"github.com/docker/docker/reference"
 )
 
 // ErrUnanalizedLayer is returned when the layer was not correctly analyzed
@@ -21,8 +23,19 @@ var ErrUnanalizedLayer = errors.New("layer cannot be analyzed")
 
 var registryMapping map[string]string
 
+func Push(image reference.Named, manifest distribution.Manifest) error {
+	switch manifest.(type) {
+	case *schema1.SignedManifest:
+		return V1Push(image, manifest.(schema1.SignedManifest))
+	case *schema2.DeserializedManifest:
+		return errors.New("Schema version 2 is not supported yet")
+
+	}
+	return nil
+}
+
 //Push image to Clair for analysis
-func Push(image reference.Named, manifest schema1.SignedManifest) error {
+func V1Push(image reference.Named, manifest schema1.SignedManifest) error {
 	layerCount := len(manifest.FSLayers)
 
 	parentID := ""

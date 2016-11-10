@@ -8,16 +8,28 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
+	"github.com/docker/distribution"
+	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/manifest/schema2"
+	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/xstrings"
-	"github.com/docker/distribution/manifest/schema1"
-	"github.com/docker/docker/reference"
 )
 
-//Analyze get Analysis os specified layer
-
 //Analyze return Clair Image analysis
-func Analyze(image reference.Named, manifest schema1.SignedManifest) ImageAnalysis {
+func Analyze(image reference.Named, manifest distribution.Manifest) ImageAnalysis {
+	switch manifest.(type) {
+	case *schema1.SignedManifest:
+		return Analyze(image, manifest.(schema1.SignedManifest))
+	case *schema2.DeserializedManifest:
+		logrus.Fatalf("Schema version 2 is not supported yet")
+
+	}
+	return ImageAnalysis{}
+}
+
+//V1Analyze return Clair Image analysis for Schema v1 image
+func V1Analyze(image reference.Named, manifest schema1.SignedManifest) ImageAnalysis {
 	c := len(manifest.FSLayers)
 	res := []v1.LayerEnvelope{}
 

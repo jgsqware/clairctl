@@ -18,19 +18,20 @@ package dockerdist
 
 import (
 	"errors"
-	"log"
-	"net/url"
+	"reflect"
 
+	log "github.com/Sirupsen/logrus"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cliconfig"
 	"github.com/docker/docker/distribution"
+	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
-	"github.com/docker/go-connections/tlsconfig"
 	"github.com/spf13/viper"
 
 	"golang.org/x/net/context"
@@ -39,46 +40,63 @@ import (
 // getRepositoryClient returns a client for performing registry operations against the given named
 // image.
 func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
-	// Lookup the index information for the name.
-	indexInfo, err := registry.ParseSearchIndexInfo(image.String())
-	if err != nil {
-		return nil, err
-	}
 
+	service := registry.NewService(registry.ServiceOptions{})
+
+	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
 	if err != nil {
+		log.Debugf("GetAuthCredentials error: %v", err)
 		return nil, err
 	}
 
-	repoInfo := &registry.RepositoryInfo{
-		image,
-		indexInfo,
-		false,
+	userAgent := dockerversion.DockerUserAgent(ctx)
+
+	_, _, err = service.Auth(ctx, &authConfig, userAgent)
+	if err != nil {
+		log.Debugf("Auth: err: %v", err)
+		return nil, err
+	}
+
+	repoInfo, err := service.ResolveRepository(image)
+
+	if err != nil {
+		log.Debugf("ResolveRepository err: %v", err)
+		return nil, err
 	}
 
 	metaHeaders := map[string][]string{}
-	tlsConfig := tlsconfig.ServerDefault()
-	//TODO(jgsqware): fix TLS
-	tlsConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
 
-	url, err := url.Parse("https://" + image.Hostname())
-	if insecure {
-		url, err = url.Parse("http://" + image.Hostname())
-	}
+	endpoints, err := service.LookupPullEndpoints(image.Hostname())
+
 	if err != nil {
+		log.Debugf("registry.LookupPullEndpoints error: %v", err)
 		return nil, err
 	}
+	var confirmedV2 bool
+	var repository distlib.Repository
 
-	endpoint := registry.APIEndpoint{
-		URL:          url,
-		Version:      registry.APIVersion2,
-		Official:     false,
-		TrimHostname: true,
-		TLSConfig:    tlsConfig,
+	for _, endpoint := range endpoints {
+		if confirmedV2 && endpoint.Version == registry.APIVersion1 {
+			log.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
+			continue
+		}
+		endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
+		if insecure {
+			endpoint.URL.Scheme = "http"
+		}
+
+		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
+		if err != nil {
+			return nil, err
+		}
+		if !confirmedV2 {
+			return nil, errors.New("Only V2 repository are supported")
+		}
+		break
 	}
-	ctx := context.Background()
-	repo, _, err := distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
-	return repo, err
+
+	return repository, nil
 }
 
 // getDigest returns the digest for the given image.
@@ -86,7 +104,6 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 	if withDigest, ok := image.(reference.Canonical); ok {
 		return withDigest.Digest(), nil
 	}
-
 	// Get TagService.
 	tagSvc := repo.Tags(ctx)
 
@@ -121,7 +138,6 @@ func GetAuthCredentials(image string) (types.AuthConfig, error) {
 	if err != nil {
 		return types.AuthConfig{}, err
 	}
-
 	// Retrieve the user's Docker configuration file (if any).
 	configFile, err := cliconfig.Load(cliconfig.ConfigDir())
 	if err != nil {
@@ -167,12 +183,16 @@ func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Man
 	}
 
 	// Verify the manifest if it's signed.
+	log.Debugf("manifest type: %v", reflect.TypeOf(manifest))
+
 	switch manifest.(type) {
 	case *schema1.SignedManifest:
 		_, verr := schema1.Verify(manifest.(*schema1.SignedManifest))
 		if verr != nil {
 			return nil, nil, verr
 		}
+	case *schema2.DeserializedManifest:
+		log.Debugf("retrieved schema2 manifest, no verification")
 	default:
 		log.Printf("Could not verify manifest for image %v: not signed", image)
 	}

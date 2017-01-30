@@ -12,10 +12,10 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/artyom/untar"
-	"github.com/jgsqware/clairctl/config"
-	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/docker/reference"
+	"github.com/jgsqware/clairctl/config"
+	"github.com/opencontainers/go-digest"
 
 	dockerclient "github.com/fsouza/go-dockerclient"
 )
@@ -127,7 +127,7 @@ func historyFromManifest(path string) (schema1.SignedManifest, error) {
 
 	for _, layer := range manifest[0].Layers {
 		var d digest.Digest
-		d, err := digest.ParseDigest("sha256:" + strings.TrimSuffix(layer, "/layer.tar"))
+		d, err := digest.Parse("sha256:" + strings.TrimSuffix(layer, "/layer.tar"))
 		if err != nil {
 			return schema1.SignedManifest{}, err
 		}
@@ -150,7 +150,7 @@ func historyFromCommand(imageName string) (schema1.SignedManifest, error) {
 	manifest := schema1.SignedManifest{}
 	for _, history := range histories {
 		var d digest.Digest
-		d, err := digest.ParseDigest(history.ID)
+		d, err := digest.Parse(history.ID)
 		if err != nil {
 			return schema1.SignedManifest{}, err
 		}

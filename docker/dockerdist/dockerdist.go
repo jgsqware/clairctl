@@ -22,16 +22,16 @@ import (
 
 	log "github.com/Sirupsen/logrus"
 	distlib "github.com/docker/distribution"
-	"github.com/docker/distribution/digest"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/cliconfig"
+	"github.com/docker/docker/cli/config"
 	"github.com/docker/docker/distribution"
 	"github.com/docker/docker/dockerversion"
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
+	"github.com/opencontainers/go-digest"
 	"github.com/spf13/viper"
 
 	"golang.org/x/net/context"
@@ -139,7 +139,7 @@ func GetAuthCredentials(image string) (types.AuthConfig, error) {
 		return types.AuthConfig{}, err
 	}
 	// Retrieve the user's Docker configuration file (if any).
-	configFile, err := cliconfig.Load(cliconfig.ConfigDir())
+	configFile, err := config.Load(config.Dir())
 	if err != nil {
 		return types.AuthConfig{}, err
 	}

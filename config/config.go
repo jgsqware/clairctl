@@ -1,15 +1,13 @@
 package config
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
+	"net"
 	"os"
-	"os/exec"
 	"os/user"
 	"strings"
 
@@ -17,9 +15,12 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/jgsqware/clairctl/xstrings"
+	"github.com/jgsqware/xnet"
 	"github.com/spf13/viper"
 )
 
+var errNoInterfaceProvided = errors.New("could not load configuration: no interface provided")
+var errInvalidInterface = errors.New("Interface does not exist")
 var ErrLoginNotFound = errors.New("user is not log in")
 
 var IsLocal = false
@@ -39,8 +40,8 @@ type authConfig struct {
 	InsecureSkipVerify bool
 }
 type clairctlConfig struct {
-	IP, TempFolder string
-	Port           int
+	IP, Interface, TempFolder string
+	Port                      int
 }
 type config struct {
 	Clair    clairConfig
@@ -101,6 +102,9 @@ func Init(cfgFile string, logLevel string) {
 	if viper.Get("clairctl.port") == nil {
 		viper.Set("clairctl.port", 0)
 	}
+	if viper.Get("clairctl.interface") == nil {
+		viper.Set("clairctl.interface", "")
+	}
 	if viper.Get("clairctl.tempFolder") == nil {
 		viper.Set("clairctl.tempFolder", "/tmp/clairctl")
 	}
@@ -129,6 +133,7 @@ func values() config {
 			IP:         viper.GetString("clairctl.ip"),
 			Port:       viper.GetInt("clairctl.port"),
 			TempFolder: viper.GetString("clairctl.tempFolder"),
+			Interface:  viper.GetString("clairctl.interface"),
 		},
 	}
 }
@@ -256,64 +261,54 @@ func writeConfigFile(logins loginMapping, file string) error {
 func LocalServerIP() (string, error) {
 	localPort := viper.GetString("clairctl.port")
 	localIP := viper.GetString("clairctl.ip")
+	localInterfaceConfig := viper.GetString("clairctl.interface")
+
 	if localIP == "" {
-		logrus.Infoln("retrieving docker0 interface as local IP")
+		logrus.Infoln("retrieving interface for local IP")
 		var err error
-		localIP, err = Docker0InterfaceIP()
+		var localInterface net.Interface
+		localInterface, err = translateInterface(localInterfaceConfig)
 		if err != nil {
-			return "", fmt.Errorf("retrieving docker0 interface ip: %v", err)
+			return "", fmt.Errorf("retrieving interface: %v", err)
+		}
+
+		localIP, err = xnet.IPv4(localInterface)
+		if err != nil {
+			return "", fmt.Errorf("retrieving interface ip: %v", err)
 		}
 	}
 	return strings.TrimSpace(localIP) + ":" + localPort, nil
 }
 
-//Docker0InterfaceIP return the docker0 interface ip by running `ip route show | grep docker0 | awk {print $9}`
-func Docker0InterfaceIP() (string, error) {
-	var localIP bytes.Buffer
+func translateInterface(localInterface string) (net.Interface, error) {
 
-	ip := exec.Command("ip", "route", "show")
-	rGrep, wIP := io.Pipe()
-	grep := exec.Command("grep", "docker0")
-	ip.Stdout = wIP
-	grep.Stdin = rGrep
-	awk := exec.Command("awk", "{print $9}")
-	rAwk, wGrep := io.Pipe()
-	grep.Stdout = wGrep
-	awk.Stdin = rAwk
-	awk.Stdout = &localIP
-	err := ip.Start()
-	if err != nil {
-		return "", err
+	if localInterface != "" {
+		logrus.Debugln("interface provided, looking for " + localInterface)
+		netInterface, err := net.InterfaceByName(localInterface)
+		if err != nil {
+			return net.Interface{}, err
+		}
+		return *netInterface, nil
 	}
-	err = grep.Start()
+
+	logrus.Debugln("no interface provided, looking for docker0")
+	netInterface, err := net.InterfaceByName("docker0")
 	if err != nil {
-		return "", err
+		logrus.Debugln("docker0 not found, looking for first connected broadcast interface")
+		interfaces, err := net.Interfaces()
+		if err != nil {
+			return net.Interface{}, err
+		}
+
+		i, err := xnet.First(xnet.Filter(interfaces, xnet.IsBroadcast), xnet.HasAddr)
+		if err != nil {
+			return net.Interface{}, err
+		}
+		return i, nil
 	}
-	err = awk.Start()
-	if err != nil {
-		return "", err
-	}
-	err = ip.Wait()
-	if err != nil {
-		return "", err
-	}
-	err = wIP.Close()
-	if err != nil {
-		return "", err
-	}
-	err = grep.Wait()
-	if err != nil {
-		return "", err
-	}
-	err = wGrep.Close()
-	if err != nil {
-		return "", err
-	}
-	err = awk.Wait()
-	if err != nil {
-		return "", err
-	}
-	return localIP.String(), nil
+
+	return *netInterface, nil
+
 }
 
 func Clean() error {

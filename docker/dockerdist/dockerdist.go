@@ -19,12 +19,12 @@ package dockerdist
 import (
 	"errors"
 	"reflect"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
+	"github.com/docker/distribution/registry/api/v2"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/cli/config"
@@ -35,8 +35,22 @@ import (
 	"github.com/opencontainers/go-digest"
 	"github.com/spf13/viper"
 
+	"strings"
+
 	"golang.org/x/net/context"
 )
+
+var ErrTagNotFound = errors.New("this image or tag is not found")
+
+func isInsecureRegistry(registryHostname string) bool {
+	for _, r := range viper.GetStringSlice("docker.insecure-registries") {
+		if r == registryHostname {
+			return true
+		}
+	}
+
+	return false
+}
 
 // getRepositoryClient returns a client for performing registry operations against the given named
 // image.
@@ -53,18 +67,18 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		return nil, err
 	}
 
-	userAgent := dockerversion.DockerUserAgent(ctx)
-	if !strings.HasPrefix(authConfig.ServerAddress, "https://") && !strings.HasPrefix(authConfig.ServerAddress, "http://") {
-		authConfig.ServerAddress = "http://" + authConfig.ServerAddress
-	}
-	_, _, err = service.Auth(ctx, &authConfig, userAgent)
-	if err != nil {
-		log.Debugf("Auth: err: %v", err)
-		return nil, err
+	if (types.AuthConfig{}) != authConfig {
+
+		userAgent := dockerversion.DockerUserAgent(ctx)
+		_, _, err = service.Auth(ctx, &authConfig, userAgent)
+		log.Debugf("there")
+		if err != nil {
+			log.Debugf("Auth: err: %v", err)
+			return nil, err
+		}
 	}
 
 	repoInfo, err := service.ResolveRepository(image)
-
 	if err != nil {
 		log.Debugf("ResolveRepository err: %v", err)
 		return nil, err
@@ -78,6 +92,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		log.Debugf("registry.LookupPullEndpoints error: %v", err)
 		return nil, err
 	}
+
 	var confirmedV2 bool
 	var repository distlib.Repository
 
@@ -86,8 +101,9 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 			log.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
 			continue
 		}
-		endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
-		if insecure {
+
+		if isInsecureRegistry(endpoint.URL.Host) {
+			//endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
 			endpoint.URL.Scheme = "http"
 		}
 
@@ -95,6 +111,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		if err != nil {
 			return nil, err
 		}
+
 		if !confirmedV2 {
 			return nil, errors.New("Only V2 repository are supported")
 		}
@@ -121,12 +138,17 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 	// Get Tag's Descriptor.
 	descriptor, err := tagSvc.Get(ctx, tag)
 	if err != nil {
+
 		// Docker returns an UnexpectedHTTPResponseError if it cannot parse the JSON body of an
 		// unexpected error. Unfortunately, HEAD requests *by definition* don't have bodies, so
 		// Docker will return this error for non-200 HEAD requests. We therefore have to hack
 		// around it... *sigh*.
 		if _, ok := err.(*client.UnexpectedHTTPResponseError); ok {
 			return "", errors.New("Received error when trying to fetch the specified tag: it might not exist or you do not have access")
+		}
+
+		if strings.Contains(err.Error(), v2.ErrorCodeManifestUnknown.Message()) {
+			return "", ErrTagNotFound
 		}
 
 		return "", err
@@ -154,12 +176,17 @@ func GetAuthCredentials(image string) (types.AuthConfig, error) {
 }
 
 // DownloadManifest the manifest for the given image, using the given credentials.
-func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Manifest, error) {
+func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distlib.Manifest, error) {
 	// Parse the image name as a docker image reference.
-	named, err := reference.ParseNamed(image)
+	n, err := reference.ParseNamed(image)
 	if err != nil {
 		return nil, nil, err
 	}
+	if reference.IsNameOnly(n) {
+		n, _ = reference.ParseNamed(image + ":" + reference.DefaultTag)
+	}
+
+	named := n.(reference.NamedTagged)
 
 	// Create a reference to a repository client for the repo.
 	repo, err := getRepositoryClient(named, insecure, "pull")
@@ -168,6 +195,7 @@ func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Man
 	}
 	// Get the digest.
 	ctx := context.Background()
+
 	digest, err := getDigest(ctx, repo, named)
 	if err != nil {
 		return nil, nil, err
@@ -204,7 +232,7 @@ func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Man
 }
 
 // DownloadV1Manifest the manifest for the given image in v1 schema format, using the given credentials.
-func DownloadV1Manifest(imageName string, insecure bool) (reference.Named, schema1.SignedManifest, error) {
+func DownloadV1Manifest(imageName string, insecure bool) (reference.NamedTagged, schema1.SignedManifest, error) {
 	image, manifest, err := DownloadManifest(imageName, insecure)
 
 	if err != nil {

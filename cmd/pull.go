@@ -20,7 +20,7 @@ import (
 //  {{end}}
 // `
 const pullTplt = `
-Image: {{.Named.FullName}}
+Image: {{.Named.FullName}}:{{.Named.Tag}}
  {{.Layers | len}} layers found
  {{range .Layers}} ➜ {{.}}
  {{end}}

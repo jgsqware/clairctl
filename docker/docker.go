@@ -15,7 +15,8 @@ import (
 )
 
 //RetrieveManifest get manifest from local or remote docker registry
-func RetrieveManifest(imageName string, withExport bool) (image reference.Named, manifest distribution.Manifest, err error) {
+func RetrieveManifest(imageName string, withExport bool) (image reference.NamedTagged, manifest distribution.Manifest, err error) {
+
 	if !config.IsLocal {
 		image, manifest, err = dockerdist.DownloadManifest(imageName, true)
 	} else {

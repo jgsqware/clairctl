@@ -21,9 +21,18 @@ import (
 )
 
 //GetLocalManifest retrieve manifest for local image
-func GetLocalManifest(imageName string, withExport bool) (reference.Named, schema1.SignedManifest, error) {
+func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, schema1.SignedManifest, error) {
 
-	image, err := reference.ParseNamed(imageName)
+	n, err := reference.ParseNamed(imageName)
+	if err != nil {
+		return nil, schema1.SignedManifest{}, err
+	}
+	var image reference.NamedTagged
+	if reference.IsNameOnly(n) {
+		image = reference.WithDefaultTag(n).(reference.NamedTagged)
+	} else {
+		image = n.(reference.NamedTagged)
+	}
 	if err != nil {
 		return nil, schema1.SignedManifest{}, err
 	}
@@ -39,9 +48,7 @@ func GetLocalManifest(imageName string, withExport bool) (reference.Named, schem
 	}
 
 	manifest.Name = image.Name()
-	if strings.Contains(image.String(), ":") {
-		manifest.Tag = strings.SplitAfter(image.String(), ":")[1]
-	}
+	manifest.Tag = image.Tag()
 	return image, manifest, err
 }
 

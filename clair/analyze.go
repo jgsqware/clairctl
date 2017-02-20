@@ -17,15 +17,29 @@ import (
 )
 
 //Analyze return Clair Image analysis
-func Analyze(image reference.Named, manifest distribution.Manifest) ImageAnalysis {
+func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageAnalysis {
+	layers, err := newLayering(image)
+	if err != nil {
+		logrus.Fatalf("cannot parse manifest")
+		return ImageAnalysis{}
+	}
+
 	switch manifest.(type) {
 	case *schema1.SignedManifest:
-		return Analyze(image, manifest.(schema1.SignedManifest))
+		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.analyze()
 	case *schema2.DeserializedManifest:
-		logrus.Fatalf("Schema version 2 is not supported yet")
-
+		logrus.Debugf("json: %v", image)
+		for _, l := range manifest.(*schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
+		}
+		return layers.analyze()
+	default:
+		logrus.Fatalf("Unsupported Schema version.")
+		return ImageAnalysis{}
 	}
-	return ImageAnalysis{}
 }
 
 //V1Analyze return Clair Image analysis for Schema v1 image

@@ -19,6 +19,7 @@ package dockerdist
 import (
 	"errors"
 	"reflect"
+	"strings"
 
 	log "github.com/Sirupsen/logrus"
 	distlib "github.com/docker/distribution"
@@ -41,8 +42,10 @@ import (
 // image.
 func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
 
-	service := registry.NewService(registry.ServiceOptions{})
-
+	serviceOptions := registry.ServiceOptions{
+		InsecureRegistries: viper.GetStringSlice("docker.insecure-registries"),
+	}
+	service := registry.NewService(serviceOptions)
 	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
 	if err != nil {
@@ -51,7 +54,9 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	}
 
 	userAgent := dockerversion.DockerUserAgent(ctx)
-
+	if !strings.HasPrefix(authConfig.ServerAddress, "https://") && !strings.HasPrefix(authConfig.ServerAddress, "http://") {
+		authConfig.ServerAddress = "http://" + authConfig.ServerAddress
+	}
 	_, _, err = service.Auth(ctx, &authConfig, userAgent)
 	if err != nil {
 		log.Debugf("Auth: err: %v", err)
@@ -161,7 +166,6 @@ func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Man
 	if err != nil {
 		return nil, nil, err
 	}
-
 	// Get the digest.
 	ctx := context.Background()
 	digest, err := getDigest(ctx, repo, named)
@@ -176,7 +180,6 @@ func DownloadManifest(image string, insecure bool) (reference.Named, distlib.Man
 	if err != nil {
 		return nil, nil, err
 	}
-
 	manifest, err := manSvc.Get(ctx, digest)
 	if err != nil {
 		return nil, nil, err

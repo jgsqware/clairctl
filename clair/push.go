@@ -24,49 +24,53 @@ var ErrUnanalizedLayer = errors.New("layer cannot be analyzed")
 var registryMapping map[string]string
 
 func Push(image reference.Named, manifest distribution.Manifest) error {
+	layers, err := newLayering(image)
+	if err != nil {
+		return err
+	}
+
 	switch manifest.(type) {
 	case *schema1.SignedManifest:
-		return V1Push(image, manifest.(schema1.SignedManifest))
+		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.pushAll()
 	case *schema2.DeserializedManifest:
-		return errors.New("Schema version 2 is not supported yet")
-
+		for _, l := range manifest.(*schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
+		}
+		return layers.pushAll()
+	default:
+		return nil
 	}
-	return nil
 }
 
-//Push image to Clair for analysis
-func V1Push(image reference.Named, manifest schema1.SignedManifest) error {
-	layerCount := len(manifest.FSLayers)
+type layering struct {
+	image          reference.Named
+	digests        []string
+	parentID, hURL string
+}
 
-	parentID := ""
+func (layer *layering) pushAll() error {
+	layerCount := len(layer.digests)
 
 	if layerCount == 0 {
 		logrus.Warningln("there is no layer to push")
 	}
-	localIP, err := config.LocalServerIP()
-	if err != nil {
-		return err
-	}
-	hURL := fmt.Sprintf("http://%v/v2", localIP)
-	if config.IsLocal {
-		hURL = strings.Replace(hURL, "/v2", "/local", -1)
-		logrus.Infof("using %v as local url", hURL)
-	}
+	for index, digest := range layer.digests {
 
-	for index, layer := range manifest.FSLayers {
-		blobsum := layer.BlobSum.String()
 		if config.IsLocal {
-			blobsum = strings.TrimPrefix(blobsum, "sha256:")
+			digest = strings.TrimPrefix(digest, "sha256:")
 		}
 
-		lUID := xstrings.Substr(blobsum, 0, 12)
+		lUID := xstrings.Substr(digest, 0, 12)
 		logrus.Infof("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
 
-		insertRegistryMapping(blobsum, image.Hostname())
+		insertRegistryMapping(digest, layer.image.Hostname())
 		payload := v1.LayerEnvelope{Layer: &v1.Layer{
-			Name:       blobsum,
-			Path:       blobsURI(image.Hostname(), image.RemoteName(), blobsum),
-			ParentName: parentID,
+			Name:       digest,
+			Path:       blobsURI(layer.image.Hostname(), layer.image.RemoteName(), digest),
+			ParentName: layer.parentID,
 			Format:     "Docker",
 		}}
 
@@ -74,18 +78,36 @@ func V1Push(image reference.Named, manifest schema1.SignedManifest) error {
 		if config.IsLocal {
 			payload.Layer.Path += "/layer.tar"
 		}
-		payload.Layer.Path = strings.Replace(payload.Layer.Path, image.Hostname(), hURL, 1)
+		payload.Layer.Path = strings.Replace(payload.Layer.Path, layer.image.Hostname(), layer.hURL, 1)
 		if err := pushLayer(payload); err != nil {
 			logrus.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
 			if err != ErrUnanalizedLayer {
 				return err
 			}
-			parentID = ""
+			layer.parentID = ""
 		} else {
-			parentID = payload.Layer.Name
+			layer.parentID = payload.Layer.Name
 		}
 	}
 	return nil
+}
+
+func newLayering(image reference.Named) (*layering, error) {
+	layer := layering{
+		parentID: "",
+		image:    image,
+	}
+
+	localIP, err := config.LocalServerIP()
+	if err != nil {
+		return nil, err
+	}
+	layer.hURL = fmt.Sprintf("http://%v/v2", localIP)
+	if config.IsLocal {
+		layer.hURL = strings.Replace(layer.hURL, "/v2", "/local", -1)
+		logrus.Infof("using %v as local url", layer.hURL)
+	}
+	return &layer, nil
 }
 
 func pushLayer(layer v1.LayerEnvelope) error {
@@ -123,6 +145,10 @@ func blobsURI(registry string, name string, digest string) string {
 }
 
 func insertRegistryMapping(layerDigest string, registryURI string) {
+
+	if registryURI == "docker.io" {
+		registryURI = "registry-1." + registryURI
+	}
 	if strings.Contains(registryURI, "docker") {
 		registryURI = "https://" + registryURI + "/v2"
 

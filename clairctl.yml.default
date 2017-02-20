@@ -5,3 +5,6 @@ clair:
   report:
     path: ./reports
     format: html
+docker:
+  insecure-registries: 
+    - "my-own-registry:5000"

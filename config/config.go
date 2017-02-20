@@ -43,10 +43,15 @@ type clairctlConfig struct {
 	IP, Interface, TempFolder string
 	Port                      int
 }
+type docker struct {
+	InsecureRegistries []string
+}
+
 type config struct {
 	Clair    clairConfig
 	Auth     authConfig
 	Clairctl clairctlConfig
+	Docker   docker
 }
 
 // Init reads in config file and ENV variables if set.
@@ -134,6 +139,9 @@ func values() config {
 			Port:       viper.GetInt("clairctl.port"),
 			TempFolder: viper.GetString("clairctl.tempFolder"),
 			Interface:  viper.GetString("clairctl.interface"),
+		},
+		Docker: docker{
+			InsecureRegistries: viper.GetStringSlice("docker.insecure-registries"),
 		},
 	}
 }

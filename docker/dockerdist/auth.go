@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/jgsqware/clairctl/config"
@@ -15,7 +16,7 @@ var ErrUnauthorized = errors.New("unauthorized access")
 
 //bearerAuthParams parse Bearer Token on Www-Authenticate header
 func bearerAuthParams(r *http.Response) map[string]string {
-	s := strings.Fields(r.Header.Get("Www-Authenticate"))
+	s := strings.SplitN(r.Header.Get("Www-Authenticate"), " ", 2)
 	if len(s) != 2 || s[0] != "Bearer" {
 		return nil
 	}
@@ -34,7 +35,7 @@ func bearerAuthParams(r *http.Response) map[string]string {
 //AuthenticateResponse add authentication headers on request
 func AuthenticateResponse(client *http.Client, dockerResponse *http.Response, request *http.Request) error {
 	bearerToken := bearerAuthParams(dockerResponse)
-	url := bearerToken["realm"] + "?service=" + bearerToken["service"]
+	url := bearerToken["realm"] + "?service=" + url.QueryEscape(bearerToken["service"])
 	if bearerToken["scope"] != "" {
 		url += "&scope=" + bearerToken["scope"]
 	}

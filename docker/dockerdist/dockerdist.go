@@ -71,7 +71,6 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 
 		userAgent := dockerversion.DockerUserAgent(ctx)
 		_, _, err = service.Auth(ctx, &authConfig, userAgent)
-		log.Debugf("there")
 		if err != nil {
 			log.Debugf("Auth: err: %v", err)
 			return nil, err

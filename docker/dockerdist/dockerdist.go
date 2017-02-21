@@ -20,7 +20,7 @@ import (
 	"errors"
 	"reflect"
 
-	log "github.com/Sirupsen/logrus"
+	"github.com/Sirupsen/logrus"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
@@ -56,6 +56,8 @@ func isInsecureRegistry(registryHostname string) bool {
 // image.
 func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
 
+	logrus.Debugf("Retrieving repository client")
+
 	serviceOptions := registry.ServiceOptions{
 		InsecureRegistries: viper.GetStringSlice("docker.insecure-registries"),
 	}
@@ -63,7 +65,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
 	if err != nil {
-		log.Debugf("GetAuthCredentials error: %v", err)
+		logrus.Debugf("GetAuthCredentials error: %v", err)
 		return nil, err
 	}
 
@@ -72,14 +74,14 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		userAgent := dockerversion.DockerUserAgent(ctx)
 		_, _, err = service.Auth(ctx, &authConfig, userAgent)
 		if err != nil {
-			log.Debugf("Auth: err: %v", err)
+			logrus.Debugf("Auth: err: %v", err)
 			return nil, err
 		}
 	}
 
 	repoInfo, err := service.ResolveRepository(image)
 	if err != nil {
-		log.Debugf("ResolveRepository err: %v", err)
+		logrus.Debugf("ResolveRepository err: %v", err)
 		return nil, err
 	}
 
@@ -88,7 +90,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	endpoints, err := service.LookupPullEndpoints(image.Hostname())
 
 	if err != nil {
-		log.Debugf("registry.LookupPullEndpoints error: %v", err)
+		logrus.Debugf("registry.LookupPullEndpoints error: %v", err)
 		return nil, err
 	}
 
@@ -97,7 +99,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 
 	for _, endpoint := range endpoints {
 		if confirmedV2 && endpoint.Version == registry.APIVersion1 {
-			log.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
+			logrus.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
 			continue
 		}
 
@@ -108,6 +110,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 
 		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
 		if err != nil {
+			logrus.Debugf("cannot instanciate new v2 repository on %v", endpoint.URL)
 			return nil, err
 		}
 
@@ -176,6 +179,7 @@ func GetAuthCredentials(image string) (types.AuthConfig, error) {
 
 // DownloadManifest the manifest for the given image, using the given credentials.
 func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distlib.Manifest, error) {
+	logrus.Debugf("Downloading manifest for %v", image)
 	// Parse the image name as a docker image reference.
 	n, err := reference.ParseNamed(image)
 	if err != nil {
@@ -201,8 +205,6 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 	}
 
 	// Retrieve the manifest for the tag.
-	log.Printf("Downloading manifest for image %v", image)
-
 	manSvc, err := repo.Manifests(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -213,7 +215,7 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 	}
 
 	// Verify the manifest if it's signed.
-	log.Debugf("manifest type: %v", reflect.TypeOf(manifest))
+	logrus.Debugf("manifest type: %v", reflect.TypeOf(manifest))
 
 	switch manifest.(type) {
 	case *schema1.SignedManifest:
@@ -222,9 +224,9 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 			return nil, nil, verr
 		}
 	case *schema2.DeserializedManifest:
-		log.Debugf("retrieved schema2 manifest, no verification")
+		logrus.Debugf("retrieved schema2 manifest, no verification")
 	default:
-		log.Printf("Could not verify manifest for image %v: not signed", image)
+		logrus.Printf("Could not verify manifest for image %v: not signed", image)
 	}
 
 	return named, manifest, nil

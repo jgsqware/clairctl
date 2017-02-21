@@ -18,7 +18,10 @@ package dockerdist
 
 import (
 	"errors"
+	"net/url"
 	"reflect"
+
+	"strings"
 
 	"github.com/Sirupsen/logrus"
 	distlib "github.com/docker/distribution"
@@ -34,9 +37,6 @@ import (
 	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
 	"github.com/spf13/viper"
-
-	"strings"
-
 	"golang.org/x/net/context"
 )
 
@@ -52,16 +52,19 @@ func isInsecureRegistry(registryHostname string) bool {
 	return false
 }
 
-// getRepositoryClient returns a client for performing registry operations against the given named
-// image.
-func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
-
-	logrus.Debugf("Retrieving repository client")
-
+func getService() *registry.DefaultService {
 	serviceOptions := registry.ServiceOptions{
 		InsecureRegistries: viper.GetStringSlice("docker.insecure-registries"),
 	}
-	service := registry.NewService(serviceOptions)
+	return registry.NewService(serviceOptions)
+}
+
+// getRepositoryClient returns a client for performing registry operations against the given named
+// image.
+func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
+	service := getService()
+	logrus.Debugf("Retrieving repository client")
+
 	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
 	if err != nil {
@@ -88,7 +91,6 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	metaHeaders := map[string][]string{}
 
 	endpoints, err := service.LookupPullEndpoints(image.Hostname())
-
 	if err != nil {
 		logrus.Debugf("registry.LookupPullEndpoints error: %v", err)
 		return nil, err
@@ -96,18 +98,17 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 
 	var confirmedV2 bool
 	var repository distlib.Repository
-
 	for _, endpoint := range endpoints {
 		if confirmedV2 && endpoint.Version == registry.APIVersion1 {
 			logrus.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
 			continue
 		}
 
+		endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
 		if isInsecureRegistry(endpoint.URL.Host) {
-			//endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
 			endpoint.URL.Scheme = "http"
 		}
-
+		logrus.Debugf("endpoint.TLSConfig.InsecureSkipVerify: %v", endpoint.TLSConfig.InsecureSkipVerify)
 		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
 		if err != nil {
 			logrus.Debugf("cannot instanciate new v2 repository on %v", endpoint.URL)
@@ -121,6 +122,25 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	}
 
 	return repository, nil
+}
+
+func GetPushURL(hostname string) (*url.URL, error) {
+	service := getService()
+	endpoints, err := service.LookupPushEndpoints(hostname)
+	if err != nil {
+		logrus.Debugf("registry.LookupPushEndpoints error: %v", err)
+		return nil, err
+	}
+
+	for _, endpoint := range endpoints {
+		endpoint.TLSConfig.InsecureSkipVerify = viper.GetBool("auth.insecureSkipVerify")
+		if isInsecureRegistry(endpoint.URL.Host) {
+			endpoint.URL.Scheme = "http"
+		}
+		return endpoint.URL, nil
+	}
+
+	return nil, errors.New("No endpoints found")
 }
 
 // getDigest returns the digest for the given image.

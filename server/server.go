@@ -75,6 +75,7 @@ func newSingleHostReverseProxy() *httputil.ReverseProxy {
 		}
 		var host string
 		host, err := clair.GetRegistryMapping(validID.FindStringSubmatch(u)[1])
+		logrus.Debugf("host retreived: %v", host)
 		if err != nil {
 			logrus.Errorf("response error: %v", err)
 			return
@@ -86,7 +87,11 @@ func newSingleHostReverseProxy() *httputil.ReverseProxy {
 			TLSClientConfig:    &tls.Config{InsecureSkipVerify: viper.GetBool("auth.insecureSkipVerify")},
 			DisableCompression: true,
 		}}
+
+		logrus.Debugf("auth.insecureSkipVerify: %v", viper.GetBool("auth.insecureSkipVerify"))
+		logrus.Debugf("request.URL.String(): %v", request.URL.String())
 		req, _ := http.NewRequest("HEAD", request.URL.String(), nil)
+
 		resp, err := client.Do(req)
 		if err != nil {
 			logrus.Errorf("response error: %v", err)
@@ -105,5 +110,9 @@ func newSingleHostReverseProxy() *httputil.ReverseProxy {
 	}
 	return &httputil.ReverseProxy{
 		Director: director,
+		Transport: &http.Transport{
+			TLSClientConfig:    &tls.Config{InsecureSkipVerify: viper.GetBool("auth.insecureSkipVerify")},
+			DisableCompression: true,
+		},
 	}
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/docker/reference"
+	"github.com/jgsqware/clairctl/docker/dockerdist"
 )
 
 // ErrUnanalizedLayer is returned when the layer was not correctly analyzed
@@ -79,17 +80,18 @@ func blobsURI(registry string, name string, digest string) string {
 
 func insertRegistryMapping(layerDigest string, registryURI string) {
 
-	if registryURI == "docker.io" {
-		registryURI = "registry-1." + registryURI
-	}
-	if strings.Contains(registryURI, "docker") {
-		registryURI = "https://" + registryURI + "/v2"
+	// if registryURI == "docker.io" {
+	// 	registryURI = "registry-1." + registryURI
+	// }
+	// if strings.Contains(registryURI, "docker") {
+	// 	registryURI = "https://" + registryURI + "/v2"
 
-	} else {
-		registryURI = "http://" + registryURI + "/v2"
-	}
-	logrus.Debugf("Saving %s[%s]", layerDigest, registryURI)
-	registryMapping[layerDigest] = registryURI
+	// } else {
+	// 	registryURI = "http://" + registryURI + "/v2"
+	// }
+	hostURL, _ := dockerdist.GetPushURL(registryURI)
+	logrus.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
+	registryMapping[layerDigest] = hostURL.String()
 }
 
 //GetRegistryMapping return the registryURI corresponding to the layerID passed as parameter

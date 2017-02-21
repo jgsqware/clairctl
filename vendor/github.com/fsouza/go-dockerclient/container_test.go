@@ -357,6 +357,18 @@ func TestInspectContainerWithContext(t *testing.T) {
              "Volumes": {},
              "HostConfig": {
                "Binds": null,
+               "BlkioDeviceReadIOps": [
+                   {
+                       "Path": "/dev/sdb",
+                       "Rate": 100
+                   }
+               ],
+               "BlkioDeviceWriteBps": [
+                   {
+                       "Path": "/dev/sdb",
+                       "Rate": 5000
+                   }
+               ],
                "ContainerIDFile": "",
                "LxcConf": [],
                "Privileged": false,
@@ -399,12 +411,12 @@ func TestInspectContainerWithContext(t *testing.T) {
 			return
 		}
 		if !reflect.DeepEqual(*container, expected) {
-			inspectError <- fmt.Errorf("InspectContainer(%q): Expected %#v. Got %#v.", id, expected, container)
+			inspectError <- fmt.Errorf("inspectContainer(%q): Expected %#v. Got %#v", id, expected, container)
 			return
 		}
 		expectedURL, _ := url.Parse(client.getURL("/containers/4fa6e0f0c678/json"))
 		if gotPath := fakeRT.requests[0].URL.Path; gotPath != expectedURL.Path {
-			inspectError <- fmt.Errorf("InspectContainer(%q): Wrong path in request. Want %q. Got %q.", id, expectedURL.Path, gotPath)
+			inspectError <- fmt.Errorf("inspectContainer(%q): Wrong path in request. Want %q. Got %q", id, expectedURL.Path, gotPath)
 			return
 		}
 		// No errors to tbe reported. Send 'nil'
@@ -1337,6 +1349,43 @@ func TestWaitContainer(t *testing.T) {
 	expectedURL, _ := url.Parse(client.getURL("/containers/" + id + "/wait"))
 	if gotPath := req.URL.Path; gotPath != expectedURL.Path {
 		t.Errorf("WaitContainer(%q): Wrong path in request. Want %q. Got %q.", id, expectedURL.Path, gotPath)
+	}
+}
+
+func TestWaitContainerWithContext(t *testing.T) {
+	fakeRT := &FakeRoundTripper{message: `{"StatusCode": 56}`, status: http.StatusOK}
+	client := newTestClient(fakeRT)
+	id := "4fa6e0f0c6786287e131c3852c58a2e01cc697a68231826813597e4994f1d6e2"
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 1*time.Second)
+	defer cancel()
+
+	var status int
+	waitError := make(chan error)
+	go func() {
+		var err error
+		status, err = client.WaitContainerWithContext(id, ctx)
+		waitError <- err
+	}()
+	select {
+	case err := <-waitError:
+		if err != nil {
+			t.Fatal(err)
+		}
+		if status != 56 {
+			t.Errorf("WaitContainer(%q): wrong return. Want 56. Got %d.", id, status)
+		}
+		req := fakeRT.requests[0]
+		if req.Method != "POST" {
+			t.Errorf("WaitContainer(%q): wrong HTTP method. Want %q. Got %q.", id, "POST", req.Method)
+		}
+		expectedURL, _ := url.Parse(client.getURL("/containers/" + id + "/wait"))
+		if gotPath := req.URL.Path; gotPath != expectedURL.Path {
+			t.Errorf("WaitContainer(%q): Wrong path in request. Want %q. Got %q.", id, expectedURL.Path, gotPath)
+		}
+	case <-ctx.Done():
+		// Context was canceled unexpectedly. Report the same.
+		t.Fatalf("Context canceled when waiting for wait container response: %v", ctx.Err())
 	}
 }
 
@@ -2578,6 +2627,20 @@ func TestStopContainerWhenContextTimesOut(t *testing.T) {
 	defer cancel()
 
 	err := client.StopContainerWithContext("id", 10, ctx)
+	if err != context.DeadlineExceeded {
+		t.Errorf("Expected 'DeadlineExceededError', got: %v", err)
+	}
+}
+
+func TestWaitContainerWhenContextTimesOut(t *testing.T) {
+	rt := sleepyRoudTripper{sleepDuration: 200 * time.Millisecond}
+
+	client := newTestClient(&rt)
+
+	ctx, cancel := context.WithTimeout(context.TODO(), 100*time.Millisecond)
+	defer cancel()
+
+	_, err := client.WaitContainerWithContext("id", ctx)
 	if err != context.DeadlineExceeded {
 		t.Errorf("Expected 'DeadlineExceededError', got: %v", err)
 	}

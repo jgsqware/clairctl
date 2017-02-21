@@ -12,7 +12,10 @@ import (
 
 	"github.com/Sirupsen/logrus"
 	"github.com/artyom/untar"
+	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/docker/image"
+	"github.com/docker/docker/layer"
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/opencontainers/go-digest"
@@ -21,11 +24,11 @@ import (
 )
 
 //GetLocalManifest retrieve manifest for local image
-func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, schema1.SignedManifest, error) {
+func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
 
 	n, err := reference.ParseNamed(imageName)
 	if err != nil {
-		return nil, schema1.SignedManifest{}, err
+		return nil, nil, err
 	}
 	var image reference.NamedTagged
 	if reference.IsNameOnly(n) {
@@ -34,9 +37,10 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 		image = n.(reference.NamedTagged)
 	}
 	if err != nil {
-		return nil, schema1.SignedManifest{}, err
+		return nil, nil, err
 	}
-	var manifest schema1.SignedManifest
+	var manifest distribution.Manifest
+	//schema1.SignedManifest
 	if withExport {
 		manifest, err = save(image.Name())
 	} else {
@@ -46,25 +50,25 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	if err != nil {
 		return nil, schema1.SignedManifest{}, err
 	}
-
-	manifest.Name = image.Name()
-	manifest.Tag = image.Tag()
-	return image, manifest, err
+	m := manifest.(schema1.SignedManifest)
+	m.Name = image.Name()
+	m.Tag = image.Tag()
+	return image, m, err
 }
 
-func save(imageName string) (schema1.SignedManifest, error) {
+func save(imageName string) (distribution.Manifest, error) {
 	path := config.TmpLocal() + "/" + strings.Split(imageName, ":")[0] + "/blobs"
 
 	if _, err := os.Stat(path); os.IsExist(err) {
 		err := os.RemoveAll(path)
 		if err != nil {
-			return schema1.SignedManifest{}, err
+			return nil, err
 		}
 	}
 
 	err := os.MkdirAll(path, 0755)
 	if err != nil {
-		return schema1.SignedManifest{}, err
+		return nil, err
 	}
 
 	logrus.Debugln("docker image to save: ", imageName)
@@ -80,32 +84,33 @@ func save(imageName string) (schema1.SignedManifest, error) {
 	}()
 
 	if err != nil {
-		return schema1.SignedManifest{}, err
+		return nil, err
 	}
 	// make a write buffer
 	w := bufio.NewWriter(fo)
 
 	client, err := dockerclient.NewClientFromEnv()
 	if err != nil {
-		return schema1.SignedManifest{}, err
+		return nil, err
 	}
+
 	err = client.ExportImage(dockerclient.ExportImageOptions{Name: imageName, OutputStream: w})
 	if err != nil {
-		return schema1.SignedManifest{}, err
+		return nil, err
 	}
 	err = openAndUntar(path+"/output.tar", path)
 	if err != nil {
-		return schema1.SignedManifest{}, err
+		return nil, err
 	}
 
 	err = os.Remove(path + "/output.tar")
 	if err != nil {
-		return schema1.SignedManifest{}, err
+		return nil, err
 	}
 	return historyFromManifest(path)
 }
 
-func historyFromManifest(path string) (schema1.SignedManifest, error) {
+func historyFromManifest(path string) (distribution.Manifest, error) {
 	mf, err := os.Open(path + "/manifest.json")
 	defer mf.Close()
 
@@ -115,9 +120,11 @@ func historyFromManifest(path string) (schema1.SignedManifest, error) {
 
 	// https://github.com/docker/docker/blob/master/image/tarexport/tarexport.go#L17
 	type manifestItem struct {
-		Config   string
-		RepoTags []string
-		Layers   []string
+		Config       string
+		RepoTags     []string
+		Layers       []string
+		Parent       image.ID                                 `json:",omitempty"`
+		LayerSources map[layer.DiffID]distribution.Descriptor `json:",omitempty"`
 	}
 
 	var manifest []manifestItem

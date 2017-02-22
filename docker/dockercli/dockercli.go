@@ -1,12 +1,14 @@
 package dockercli
 
 import (
-	"bufio"
+	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
 	"encoding/json"
+	"errors"
 	"io"
 	"os"
+	"os/exec"
 	"strings"
 	"syscall"
 
@@ -42,7 +44,7 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	var manifest distribution.Manifest
 	//schema1.SignedManifest
 	if withExport {
-		manifest, err = save(image.Name())
+		manifest, err = save(image.Name() + ":" + image.Tag())
 	} else {
 		manifest, err = historyFromCommand(image.Name())
 	}
@@ -54,6 +56,20 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	m.Name = image.Name()
 	m.Tag = image.Tag()
 	return image, m, err
+}
+
+func saveImage(imageName string, fo *os.File) error {
+
+	return nil
+	// save.Stderr = &stderr
+
+	// save.Stdout = writer
+	// err := save.Run()
+	// if err != nil {
+	// 	return errors.New(stderr.String())
+	// }
+
+	// return nil
 }
 
 func save(imageName string) (distribution.Manifest, error) {
@@ -86,18 +102,15 @@ func save(imageName string) (distribution.Manifest, error) {
 	if err != nil {
 		return nil, err
 	}
-	// make a write buffer
-	w := bufio.NewWriter(fo)
 
-	client, err := dockerclient.NewClientFromEnv()
-	if err != nil {
-		return nil, err
+	var stderr bytes.Buffer
+	save := exec.Command("docker", "save", imageName)
+	save.Stderr = &stderr
+	save.Stdout = fo
+	if err := save.Run(); err != nil {
+		return nil, errors.New(stderr.String())
 	}
 
-	err = client.ExportImage(dockerclient.ExportImageOptions{Name: imageName, OutputStream: w})
-	if err != nil {
-		return nil, err
-	}
 	err = openAndUntar(path+"/output.tar", path)
 	if err != nil {
 		return nil, err

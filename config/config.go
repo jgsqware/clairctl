@@ -25,6 +25,7 @@ var ErrLoginNotFound = errors.New("user is not log in")
 
 var IsLocal = false
 var Insecure = false
+var NoClean = false
 
 var ImageName string
 
@@ -55,7 +56,8 @@ type config struct {
 }
 
 // Init reads in config file and ENV variables if set.
-func Init(cfgFile string, logLevel string) {
+func Init(cfgFile string, logLevel string, noClean bool) {
+	NoClean = noClean
 	lvl := logrus.WarnLevel
 	if logLevel != "" {
 		var err error
@@ -320,7 +322,7 @@ func translateInterface(localInterface string) (net.Interface, error) {
 }
 
 func Clean() error {
-	if IsLocal {
+	if IsLocal && !NoClean {
 		logrus.Debugln("cleaning temporary local repository")
 		err := os.RemoveAll(TmpLocal())
 

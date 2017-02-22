@@ -49,7 +49,6 @@ func (layer *layering) pushAll() error {
 
 		lUID := xstrings.Substr(digest, 0, 12)
 		logrus.Infof("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
-		logrus.Infof("hurl", layer.hURL)
 
 		insertRegistryMapping(digest, layer.image.Hostname())
 		payload := v1.LayerEnvelope{Layer: &v1.Layer{
@@ -89,7 +88,7 @@ func (layers *layering) analyze() ImageAnalysis {
 		lShort := xstrings.Substr(digest, 0, 12)
 
 		if a, err := analyzeLayer(digest); err != nil {
-			logrus.Infof("analysing layer [%v] %d/%d: %v", lShort, i+1, c, err)
+			logrus.Errorf("analysing layer [%v] %d/%d: %v", lShort, i+1, c, err)
 		} else {
 			logrus.Infof("analysing layer [%v] %d/%d", lShort, i+1, c)
 			res = append(res, a)

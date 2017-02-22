@@ -16,7 +16,7 @@ import (
 
 //RetrieveManifest get manifest from local or remote docker registry
 func RetrieveManifest(imageName string, withExport bool) (image reference.NamedTagged, manifest distribution.Manifest, err error) {
-	
+
 	if !config.IsLocal {
 		image, manifest, err = dockerdist.DownloadManifest(imageName, true)
 	} else {
@@ -30,12 +30,20 @@ func GetLayerDigests(manifest distribution.Manifest) ([]digest.Digest, error) {
 	layers := []digest.Digest{}
 
 	switch manifest.(type) {
+	case schema1.SignedManifest:
+		for _, l := range manifest.(schema1.SignedManifest).FSLayers {
+			layers = append(layers, l.BlobSum)
+		}
 	case *schema1.SignedManifest:
 		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
 			layers = append(layers, l.BlobSum)
 		}
 	case *schema2.DeserializedManifest:
 		for _, d := range manifest.(*schema2.DeserializedManifest).Layers {
+			layers = append(layers, d.Digest)
+		}
+	case schema2.DeserializedManifest:
+		for _, d := range manifest.(schema2.DeserializedManifest).Layers {
 			layers = append(layers, d.Digest)
 		}
 	default:

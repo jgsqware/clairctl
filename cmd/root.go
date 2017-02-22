@@ -14,6 +14,7 @@ var errInternalError = errors.New("client quit unexpectedly")
 
 var cfgFile string
 var logLevel string
+var noClean bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -41,9 +42,10 @@ func init() {
 	cobra.OnInitialize(initConfig)
 	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.clairctl.yml)")
 	RootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "", "log level [Panic,Fatal,Error,Warn,Info,Debug]")
+	RootCmd.PersistentFlags().BoolVar(&noClean, "no-clean", false, "Disable the temporary folder cleaning")
 }
 
 func initConfig() {
-	config.Init(cfgFile, logLevel)
+	config.Init(cfgFile, logLevel, noClean)
 	clair.Config()
 }

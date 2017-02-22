@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
@@ -12,8 +11,6 @@ import (
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/docker/reference"
-	"github.com/jgsqware/clairctl/config"
-	"github.com/jgsqware/clairctl/xstrings"
 )
 
 //Analyze return Clair Image analysis
@@ -25,9 +22,21 @@ func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageA
 	}
 
 	switch manifest.(type) {
+	case schema1.SignedManifest:
+
+		for _, l := range manifest.(schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.analyze()
 	case *schema1.SignedManifest:
 		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
 			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.analyze()
+	case schema2.DeserializedManifest:
+		logrus.Debugf("json: %v", image)
+		for _, l := range manifest.(schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
 		}
 		return layers.analyze()
 	case *schema2.DeserializedManifest:
@@ -39,33 +48,6 @@ func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageA
 	default:
 		logrus.Fatalf("Unsupported Schema version.")
 		return ImageAnalysis{}
-	}
-}
-
-//V1Analyze return Clair Image analysis for Schema v1 image
-func V1Analyze(image reference.Named, manifest schema1.SignedManifest) ImageAnalysis {
-	c := len(manifest.FSLayers)
-	res := []v1.LayerEnvelope{}
-
-	for i := range manifest.FSLayers {
-		blobsum := manifest.FSLayers[c-i-1].BlobSum.String()
-		if config.IsLocal {
-			blobsum = strings.TrimPrefix(blobsum, "sha256:")
-		}
-		lShort := xstrings.Substr(blobsum, 0, 12)
-
-		if a, err := analyzeLayer(blobsum); err != nil {
-			logrus.Infof("analysing layer [%v] %d/%d: %v", lShort, i+1, c, err)
-		} else {
-			logrus.Infof("analysing layer [%v] %d/%d", lShort, i+1, c)
-			res = append(res, a)
-		}
-	}
-	return ImageAnalysis{
-		Registry:  xstrings.TrimPrefixSuffix(image.Hostname(), "http://", "/v2"),
-		ImageName: manifest.Name,
-		Tag:       manifest.Tag,
-		Layers:    res,
 	}
 }
 

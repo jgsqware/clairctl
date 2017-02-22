@@ -29,9 +29,19 @@ func Push(image reference.NamedTagged, manifest distribution.Manifest) error {
 	}
 
 	switch manifest.(type) {
+	case schema1.SignedManifest:
+		for _, l := range manifest.(schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.pushAll()
 	case *schema1.SignedManifest:
 		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
 			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.pushAll()
+	case schema2.DeserializedManifest:
+		for _, l := range manifest.(schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
 		}
 		return layers.pushAll()
 	case *schema2.DeserializedManifest:
@@ -40,7 +50,7 @@ func Push(image reference.NamedTagged, manifest distribution.Manifest) error {
 		}
 		return layers.pushAll()
 	default:
-		return nil
+		return errors.New("Unsupported Schema version.")
 	}
 }
 
@@ -80,15 +90,6 @@ func blobsURI(registry string, name string, digest string) string {
 
 func insertRegistryMapping(layerDigest string, registryURI string) {
 
-	// if registryURI == "docker.io" {
-	// 	registryURI = "registry-1." + registryURI
-	// }
-	// if strings.Contains(registryURI, "docker") {
-	// 	registryURI = "https://" + registryURI + "/v2"
-
-	// } else {
-	// 	registryURI = "http://" + registryURI + "/v2"
-	// }
 	hostURL, _ := dockerdist.GetPushURL(registryURI)
 	logrus.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
 	registryMapping[layerDigest] = hostURL.String()

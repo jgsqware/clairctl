@@ -121,8 +121,6 @@ imports:
   version: 1b2437bc582b3cfbb341ee5a29f8ef5b42912ff2
 - name: github.com/fsnotify/fsnotify
   version: bd2828f9f176e52d7222e565abb2d338d3f3c103
-- name: github.com/fsouza/go-dockerclient
-  version: 364c822d280c4f34afc3339e50d4fc0129d6b5ec
 - name: github.com/golang/protobuf
   version: 5fc2294e655b78ed8a02082d37808d46c17d7e64
   subpackages:

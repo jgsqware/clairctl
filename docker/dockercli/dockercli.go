@@ -1,14 +1,13 @@
 package dockercli
 
 import (
-	"bytes"
 	"compress/bzip2"
 	"compress/gzip"
+	"context"
 	"encoding/json"
-	"errors"
 	"io"
+	"io/ioutil"
 	"os"
-	"os/exec"
 	"strings"
 	"syscall"
 
@@ -16,13 +15,12 @@ import (
 	"github.com/artyom/untar"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/docker/client"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/opencontainers/go-digest"
-
-	dockerclient "github.com/fsouza/go-dockerclient"
 )
 
 //GetLocalManifest retrieve manifest for local image
@@ -42,11 +40,10 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 		return nil, nil, err
 	}
 	var manifest distribution.Manifest
-	//schema1.SignedManifest
 	if withExport {
 		manifest, err = save(image.Name() + ":" + image.Tag())
 	} else {
-		manifest, err = historyFromCommand(image.Name())
+		manifest, err = historyFromCommand(image.Name() + ":" + image.Tag())
 	}
 
 	if err != nil {
@@ -90,7 +87,21 @@ func save(imageName string) (distribution.Manifest, error) {
 	logrus.Debugln("docker image to save: ", imageName)
 	logrus.Debugln("saving in: ", path)
 
-	// open output file
+	cli, err := client.NewEnvClient()
+	if err != nil {
+		panic(err)
+	}
+
+	img, err := cli.ImageSave(context.Background(), []string{imageName})
+	if err != nil {
+		panic(err)
+	}
+	all, err := ioutil.ReadAll(img)
+	if err != nil {
+		panic(err)
+	}
+	img.Close()
+
 	fo, err := os.Create(path + "/output.tar")
 	// close fo on exit and check for its returned error
 	defer func() {
@@ -103,12 +114,8 @@ func save(imageName string) (distribution.Manifest, error) {
 		return nil, err
 	}
 
-	var stderr bytes.Buffer
-	save := exec.Command("docker", "save", imageName)
-	save.Stderr = &stderr
-	save.Stdout = fo
-	if err := save.Run(); err != nil {
-		return nil, errors.New(stderr.String())
+	if _, err := fo.Write(all); err != nil {
+		panic(err)
 	}
 
 	err = openAndUntar(path+"/output.tar", path)
@@ -165,14 +172,12 @@ func historyFromManifest(path string) (distribution.Manifest, error) {
 }
 
 func historyFromCommand(imageName string) (schema1.SignedManifest, error) {
-	client, err := dockerclient.NewClientFromEnv()
+
+	client, err := client.NewEnvClient()
 	if err != nil {
 		return schema1.SignedManifest{}, err
 	}
-	histories, err := client.ImageHistory(imageName)
-	if err != nil {
-		return schema1.SignedManifest{}, err
-	}
+	histories, err := client.ImageHistory(context.Background(), imageName)
 
 	manifest := schema1.SignedManifest{}
 	for _, history := range histories {

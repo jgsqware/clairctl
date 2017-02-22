@@ -17,8 +17,6 @@ import:
   version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
   subpackages:
   - tlsconfig
-- package: github.com/fsouza/go-dockerclient
-  version: 364c822d280c4f34afc3339e50d4fc0129d6b5ec
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: golang.org/x/net

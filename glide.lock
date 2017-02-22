@@ -1,5 +1,5 @@
-hash: bc007f60dd98f82853e79a5bcb1e69e6cfebef9323c58322432b4a2a9430ff22
-updated: 2017-01-30T16:37:44.178792911+01:00
+hash: 8dabd552a0b29787a9e76ec735db40a94a98d2c321323f743486f7a983a3748b
+updated: 2017-02-22T11:22:57.362383329+01:00
 imports:
 - name: github.com/artyom/untar
   version: 02ed5a2449a661eb02b1e3d658524223ab726412
@@ -146,6 +146,8 @@ imports:
   - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jgsqware/xnet
+  version: 13630f0737d214dba8344df649039c19551553d8
 - name: github.com/julienschmidt/httprouter
   version: 21439ef4d70ba4f3e2a5ed9249e7b03af4019b40
 - name: github.com/kr/fs
@@ -202,7 +204,7 @@ imports:
 - name: github.com/prometheus/procfs
   version: 406e5b7bfd8201a36e2bb5f7bdae0b03380c2ce8
 - name: github.com/Sirupsen/logrus
-  version: d26492970760ca5d33129d2d799e34be5c4782eb
+  version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:

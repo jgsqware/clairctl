@@ -26,24 +26,24 @@ func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageA
 		for _, l := range manifest.(schema1.SignedManifest).FSLayers {
 			layers.digests = append(layers.digests, l.BlobSum.String())
 		}
-		return layers.analyze()
+		return layers.analyzeAll()
 	case *schema1.SignedManifest:
 		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
 			layers.digests = append(layers.digests, l.BlobSum.String())
 		}
-		return layers.analyze()
+		return layers.analyzeAll()
 	case schema2.DeserializedManifest:
 		log.Debugf("json: %v", image)
 		for _, l := range manifest.(schema2.DeserializedManifest).Layers {
 			layers.digests = append(layers.digests, l.Digest.String())
 		}
-		return layers.analyze()
+		return layers.analyzeAll()
 	case *schema2.DeserializedManifest:
 		log.Debugf("json: %v", image)
 		for _, l := range manifest.(*schema2.DeserializedManifest).Layers {
 			layers.digests = append(layers.digests, l.Digest.String())
 		}
-		return layers.analyze()
+		return layers.analyzeAll()
 	default:
 		log.Fatalf("Unsupported Schema version.")
 		return ImageAnalysis{}

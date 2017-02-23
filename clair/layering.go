@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
@@ -34,13 +35,13 @@ func newLayering(image reference.NamedTagged) (*layering, error) {
 	return &layer, nil
 }
 
-func (layer *layering) pushAll() error {
-	layerCount := len(layer.digests)
+func (layers *layering) pushAll() error {
+	layerCount := len(layers.digests)
 
 	if layerCount == 0 {
 		log.Warning("there is no layer to push")
 	}
-	for index, digest := range layer.digests {
+	for index, digest := range layers.digests {
 
 		if config.IsLocal {
 			digest = strings.TrimPrefix(digest, "sha256:")
@@ -49,11 +50,11 @@ func (layer *layering) pushAll() error {
 		lUID := xstrings.Substr(digest, 0, 12)
 		log.Infof("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
 
-		insertRegistryMapping(digest, layer.image.Hostname())
+		insertRegistryMapping(digest, layers.image.Hostname())
 		payload := v1.LayerEnvelope{Layer: &v1.Layer{
 			Name:       digest,
-			Path:       blobsURI(layer.image.Hostname(), layer.image.RemoteName(), digest),
-			ParentName: layer.parentID,
+			Path:       blobsURI(layers.image.Hostname(), layers.image.RemoteName(), digest),
+			ParentName: layers.parentID,
 			Format:     "Docker",
 		}}
 
@@ -61,35 +62,35 @@ func (layer *layering) pushAll() error {
 		if config.IsLocal {
 			payload.Layer.Path += "/layer.tar"
 		}
-		payload.Layer.Path = strings.Replace(payload.Layer.Path, layer.image.Hostname(), layer.hURL, 1)
+		payload.Layer.Path = strings.Replace(payload.Layer.Path, layers.image.Hostname(), layers.hURL, 1)
 		if err := pushLayer(payload); err != nil {
 			log.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
 			if err != ErrUnanalizedLayer {
 				return err
 			}
-			layer.parentID = ""
+			layers.parentID = ""
 		} else {
-			layer.parentID = payload.Layer.Name
+			layers.parentID = payload.Layer.Name
 		}
 	}
 	return nil
 }
 
-func (layers *layering) analyze() ImageAnalysis {
-	c := len(layers.digests)
+func (layers *layering) analyzeAll() ImageAnalysis {
+	layerCount := len(layers.digests)
 	res := []v1.LayerEnvelope{}
 
-	for i := range layers.digests {
-		digest := layers.digests[c-i-1]
+	for index := range layers.digests {
+		digest := layers.digests[layerCount-index-1]
 		if config.IsLocal {
 			digest = strings.TrimPrefix(digest, "sha256:")
 		}
 		lShort := xstrings.Substr(digest, 0, 12)
 
 		if a, err := analyzeLayer(digest); err != nil {
-			log.Errorf("analysing layer [%v] %d/%d: %v", lShort, i+1, c, err)
+			log.Errorf("analysing layer [%v] %d/%d: %v", lShort, index+1, layerCount, err)
 		} else {
-			log.Infof("analysing layer [%v] %d/%d", lShort, i+1, c)
+			log.Infof("analysing layer [%v] %d/%d", lShort, index+1, layerCount)
 			res = append(res, a)
 		}
 	}
@@ -99,4 +100,27 @@ func (layers *layering) analyze() ImageAnalysis {
 		Tag:       layers.image.Tag(),
 		Layers:    res,
 	}
+}
+
+func (layers *layering) deleteAll() error {
+	layerCount := len(layers.digests)
+
+	if layerCount == 0 {
+		logrus.Warningln("there is no layer to push")
+	}
+
+	for i := range layers.digests {
+		digest := layers.digests[layerCount-i-1]
+		if config.IsLocal {
+			digest = strings.TrimPrefix(digest, "sha256:")
+		}
+		lShort := xstrings.Substr(digest, 0, 12)
+
+		if err := deleteLayer(digest); err != nil {
+			logrus.Infof("deleting layer [%v] %d/%d: Not found or already processed", lShort, i+1, layerCount)
+		} else {
+			logrus.Infof("deleting layer [%v] %d/%d", lShort, i+1, layerCount)
+		}
+	}
+	return nil
 }

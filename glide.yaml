@@ -39,3 +39,8 @@ import:
   version: ca7e7f10cb9fd9c1a6ff7f60436c086d73714180
 - package: github.com/opencontainers/go-digest
   version: 21dfd564fd89c944783d00d069f33e3e7123c448
+- package: github.com/coreos/pkg
+  version: 2c77715c4df99b5420ffcae14ead08f52104065d
+  subpackages:
+  - capnslog
+  - timeutil

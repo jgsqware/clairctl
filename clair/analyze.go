@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
@@ -17,7 +16,7 @@ import (
 func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageAnalysis {
 	layers, err := newLayering(image)
 	if err != nil {
-		logrus.Fatalf("cannot parse manifest")
+		log.Fatalf("cannot parse manifest")
 		return ImageAnalysis{}
 	}
 
@@ -34,19 +33,19 @@ func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageA
 		}
 		return layers.analyze()
 	case schema2.DeserializedManifest:
-		logrus.Debugf("json: %v", image)
+		log.Debugf("json: %v", image)
 		for _, l := range manifest.(schema2.DeserializedManifest).Layers {
 			layers.digests = append(layers.digests, l.Digest.String())
 		}
 		return layers.analyze()
 	case *schema2.DeserializedManifest:
-		logrus.Debugf("json: %v", image)
+		log.Debugf("json: %v", image)
 		for _, l := range manifest.(*schema2.DeserializedManifest).Layers {
 			layers.digests = append(layers.digests, l.Digest.String())
 		}
 		return layers.analyze()
 	default:
-		logrus.Fatalf("Unsupported Schema version.")
+		log.Fatalf("Unsupported Schema version.")
 		return ImageAnalysis{}
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
@@ -30,7 +29,7 @@ func newLayering(image reference.NamedTagged) (*layering, error) {
 	layer.hURL = fmt.Sprintf("http://%v/v2", localIP)
 	if config.IsLocal {
 		layer.hURL = strings.Replace(layer.hURL, "/v2", "/local", -1)
-		logrus.Infof("using %v as local url", layer.hURL)
+		log.Infof("using %v as local url", layer.hURL)
 	}
 	return &layer, nil
 }
@@ -39,7 +38,7 @@ func (layer *layering) pushAll() error {
 	layerCount := len(layer.digests)
 
 	if layerCount == 0 {
-		logrus.Warningln("there is no layer to push")
+		log.Warning("there is no layer to push")
 	}
 	for index, digest := range layer.digests {
 
@@ -48,7 +47,7 @@ func (layer *layering) pushAll() error {
 		}
 
 		lUID := xstrings.Substr(digest, 0, 12)
-		logrus.Infof("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
+		log.Infof("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
 
 		insertRegistryMapping(digest, layer.image.Hostname())
 		payload := v1.LayerEnvelope{Layer: &v1.Layer{
@@ -64,7 +63,7 @@ func (layer *layering) pushAll() error {
 		}
 		payload.Layer.Path = strings.Replace(payload.Layer.Path, layer.image.Hostname(), layer.hURL, 1)
 		if err := pushLayer(payload); err != nil {
-			logrus.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
+			log.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
 			if err != ErrUnanalizedLayer {
 				return err
 			}
@@ -88,9 +87,9 @@ func (layers *layering) analyze() ImageAnalysis {
 		lShort := xstrings.Substr(digest, 0, 12)
 
 		if a, err := analyzeLayer(digest); err != nil {
-			logrus.Errorf("analysing layer [%v] %d/%d: %v", lShort, i+1, c, err)
+			log.Errorf("analysing layer [%v] %d/%d: %v", lShort, i+1, c, err)
 		} else {
-			logrus.Infof("analysing layer [%v] %d/%d", lShort, i+1, c)
+			log.Infof("analysing layer [%v] %d/%d", lShort, i+1, c)
 			res = append(res, a)
 		}
 	}

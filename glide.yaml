@@ -1,7 +1,5 @@
 package: github.com/jgsqware/clairctl
 import:
-- package: github.com/Sirupsen/logrus
-  version: ^0.10.0
 - package: github.com/artyom/untar
 - package: github.com/coreos/clair
   version: ^1.2.5
@@ -24,6 +22,7 @@ import:
   subpackages:
   - context
 - package: gopkg.in/yaml.v2
+  version: f7716cbe52baa25d2e9b0d0da546fcf909fc16b4
 - package: github.com/docker/go-units
   version: ^0.3.1
 - package: github.com/docker/docker
@@ -39,3 +38,4 @@ import:
 - package: golang.org/x/crypto
   version: ca7e7f10cb9fd9c1a6ff7f60436c086d73714180
 - package: github.com/opencontainers/go-digest
+  version: 21dfd564fd89c944783d00d069f33e3e7123c448

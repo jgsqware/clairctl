@@ -23,7 +23,7 @@ import (
 
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/coreos/pkg/capnslog"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
@@ -39,6 +39,8 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/net/context"
 )
+
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockerdist")
 
 var ErrTagNotFound = errors.New("this image or tag is not found")
 
@@ -63,12 +65,12 @@ func getService() *registry.DefaultService {
 // image.
 func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
 	service := getService()
-	logrus.Debugf("Retrieving repository client")
+	log.Debugf("Retrieving repository client")
 
 	ctx := context.Background()
 	authConfig, err := GetAuthCredentials(image.String())
 	if err != nil {
-		logrus.Debugf("GetAuthCredentials error: %v", err)
+		log.Debugf("GetAuthCredentials error: %v", err)
 		return nil, err
 	}
 
@@ -77,14 +79,14 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		userAgent := dockerversion.DockerUserAgent(ctx)
 		_, _, err = service.Auth(ctx, &authConfig, userAgent)
 		if err != nil {
-			logrus.Debugf("Auth: err: %v", err)
+			log.Debugf("Auth: err: %v", err)
 			return nil, err
 		}
 	}
 
 	repoInfo, err := service.ResolveRepository(image)
 	if err != nil {
-		logrus.Debugf("ResolveRepository err: %v", err)
+		log.Debugf("ResolveRepository err: %v", err)
 		return nil, err
 	}
 
@@ -92,7 +94,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 
 	endpoints, err := service.LookupPullEndpoints(image.Hostname())
 	if err != nil {
-		logrus.Debugf("registry.LookupPullEndpoints error: %v", err)
+		log.Debugf("registry.LookupPullEndpoints error: %v", err)
 		return nil, err
 	}
 
@@ -100,7 +102,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	var repository distlib.Repository
 	for _, endpoint := range endpoints {
 		if confirmedV2 && endpoint.Version == registry.APIVersion1 {
-			logrus.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
+			log.Debugf("Skipping v1 endpoint %s because v2 registry was detected", endpoint.URL)
 			continue
 		}
 
@@ -108,10 +110,10 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 		if isInsecureRegistry(endpoint.URL.Host) {
 			endpoint.URL.Scheme = "http"
 		}
-		logrus.Debugf("endpoint.TLSConfig.InsecureSkipVerify: %v", endpoint.TLSConfig.InsecureSkipVerify)
+		log.Debugf("endpoint.TLSConfig.InsecureSkipVerify: %v", endpoint.TLSConfig.InsecureSkipVerify)
 		repository, confirmedV2, err = distribution.NewV2Repository(ctx, repoInfo, endpoint, metaHeaders, &authConfig, scopes...)
 		if err != nil {
-			logrus.Debugf("cannot instanciate new v2 repository on %v", endpoint.URL)
+			log.Debugf("cannot instanciate new v2 repository on %v", endpoint.URL)
 			return nil, err
 		}
 
@@ -128,7 +130,7 @@ func GetPushURL(hostname string) (*url.URL, error) {
 	service := getService()
 	endpoints, err := service.LookupPushEndpoints(hostname)
 	if err != nil {
-		logrus.Debugf("registry.LookupPushEndpoints error: %v", err)
+		log.Debugf("registry.LookupPushEndpoints error: %v", err)
 		return nil, err
 	}
 
@@ -199,7 +201,7 @@ func GetAuthCredentials(image string) (types.AuthConfig, error) {
 
 // DownloadManifest the manifest for the given image, using the given credentials.
 func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distlib.Manifest, error) {
-	logrus.Debugf("Downloading manifest for %v", image)
+	log.Debugf("Downloading manifest for %v", image)
 	// Parse the image name as a docker image reference.
 	n, err := reference.ParseNamed(image)
 	if err != nil {
@@ -235,7 +237,7 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 	}
 
 	// Verify the manifest if it's signed.
-	logrus.Debugf("manifest type: %v", reflect.TypeOf(manifest))
+	log.Debugf("manifest type: %v", reflect.TypeOf(manifest))
 
 	switch manifest.(type) {
 	case *schema1.SignedManifest:
@@ -244,9 +246,9 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 			return nil, nil, verr
 		}
 	case *schema2.DeserializedManifest:
-		logrus.Debugf("retrieved schema2 manifest, no verification")
+		log.Debugf("retrieved schema2 manifest, no verification")
 	default:
-		logrus.Printf("Could not verify manifest for image %v: not signed", image)
+		log.Printf("Could not verify manifest for image %v: not signed", image)
 	}
 
 	return named, manifest, nil

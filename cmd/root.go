@@ -5,12 +5,15 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/coreos/pkg/capnslog"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/spf13/cobra"
 )
 
 var errInternalError = errors.New("client quit unexpectedly")
+
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "cmd")
 
 var cfgFile string
 var logLevel string

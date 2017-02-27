@@ -5,7 +5,6 @@ import (
 	"html/template"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
@@ -13,12 +12,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// const pullTplt = `
-// Image: {{.Named.FullName}}
-//  {{.V1Manifest.FSLayers | len}} layers found
-//  {{range .V1Manifest.FSLayers}} ➜ {{.BlobSum}}
-//  {{end}}
-// `
 const pullTplt = `
 Image: {{.Named.FullName}}:{{.Named.Tag}}
  {{.Layers | len}} layers found
@@ -41,13 +34,13 @@ var pullCmd = &cobra.Command{
 		image, manifest, err := docker.RetrieveManifest(config.ImageName, true)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
+			log.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
 		}
 
 		layers, err := docker.GetLayerDigests(manifest)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("retrieving layers for %q: %v", config.ImageName, err)
+			log.Fatalf("retrieving layers for %q: %v", config.ImageName, err)
 		}
 		data := struct {
 			Layers []digest.Digest
@@ -60,7 +53,7 @@ var pullCmd = &cobra.Command{
 		err = template.Must(template.New("pull").Parse(pullTplt)).Execute(os.Stdout, data)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("rendering image: %v", err)
+			log.Fatalf("rendering image: %v", err)
 		}
 	},
 }

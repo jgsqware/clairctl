@@ -2,9 +2,12 @@ package test
 
 import (
 	"io/ioutil"
-	"log"
 	"os"
+
+	"github.com/coreos/pkg/capnslog"
 )
+
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "test")
 
 func CreateTmpConfigFile(content string) string {
 

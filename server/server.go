@@ -11,12 +11,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/coreos/pkg/capnslog"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker/dockerdist"
 	"github.com/spf13/viper"
 )
+
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "server")
 
 //Serve run a local server with the fileserver and the reverse proxy
 func Serve(sURL string) error {
@@ -26,10 +28,10 @@ func Serve(sURL string) error {
 		http.Handle("/local/", http.StripPrefix("/local", restrictedFileServer(config.TmpLocal())))
 
 		listener := tcpListener(sURL)
-		logrus.Info("Starting Server on ", listener.Addr())
+		log.Info("Starting Server on ", listener.Addr())
 
 		if err := http.Serve(listener, nil); err != nil {
-			logrus.Fatalf("local server error: %v", err)
+			log.Fatalf("local server error: %v", err)
 		}
 	}()
 	//sleep needed to wait the server start. Maybe use a channel for that
@@ -40,12 +42,12 @@ func Serve(sURL string) error {
 func tcpListener(sURL string) (listener net.Listener) {
 	listener, err := net.Listen("tcp", sURL)
 	if err != nil {
-		logrus.Fatalf("cannot instanciate listener: %v", err)
+		log.Fatalf("cannot instanciate listener: %v", err)
 	}
 
 	if viper.GetInt("clairctl.port") == 0 {
 		port := strings.Split(listener.Addr().String(), ":")[1]
-		logrus.Debugf("Update local server port from %q to %q", "0", port)
+		log.Debugf("Update local server port from %q to %q", "0", port)
 		viper.Set("clairctl.port", port)
 	}
 
@@ -68,16 +70,16 @@ func newSingleHostReverseProxy() *httputil.ReverseProxy {
 
 		var validID = regexp.MustCompile(`.*/blobs/(.*)$`)
 		u := request.URL.Path
-		logrus.Debugf("request url: %v", u)
-		logrus.Debugf("request for image: %v", config.ImageName)
+		log.Debugf("request url: %v", u)
+		log.Debugf("request for image: %v", config.ImageName)
 		if !validID.MatchString(u) {
-			logrus.Errorf("cannot parse url: %v", u)
+			log.Errorf("cannot parse url: %v", u)
 		}
 		var host string
 		host, err := clair.GetRegistryMapping(validID.FindStringSubmatch(u)[1])
-		logrus.Debugf("host retreived: %v", host)
+		log.Debugf("host retreived: %v", host)
 		if err != nil {
-			logrus.Errorf("response error: %v", err)
+			log.Errorf("response error: %v", err)
 			return
 		}
 		out, _ := url.Parse(host)
@@ -88,18 +90,18 @@ func newSingleHostReverseProxy() *httputil.ReverseProxy {
 			DisableCompression: true,
 		}}
 
-		logrus.Debugf("auth.insecureSkipVerify: %v", viper.GetBool("auth.insecureSkipVerify"))
-		logrus.Debugf("request.URL.String(): %v", request.URL.String())
+		log.Debugf("auth.insecureSkipVerify: %v", viper.GetBool("auth.insecureSkipVerify"))
+		log.Debugf("request.URL.String(): %v", request.URL.String())
 		req, _ := http.NewRequest("HEAD", request.URL.String(), nil)
 
 		resp, err := client.Do(req)
 		if err != nil {
-			logrus.Errorf("response error: %v", err)
+			log.Errorf("response error: %v", err)
 			return
 		}
 
 		if resp.StatusCode == http.StatusUnauthorized {
-			logrus.Info("pull from clair is unauthorized")
+			log.Info("pull from clair is unauthorized")
 			dockerdist.AuthenticateResponse(client, resp, request)
 		}
 

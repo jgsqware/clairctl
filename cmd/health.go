@@ -5,7 +5,6 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/spf13/cobra"
 )
@@ -27,7 +26,7 @@ var healthCmd = &cobra.Command{
 		err := template.Must(template.New("health").Parse(healthTplt)).Execute(os.Stdout, ok)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("rendering the health: %v", err)
+			log.Fatalf("rendering the health: %v", err)
 		}
 
 	},

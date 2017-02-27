@@ -1,5 +1,5 @@
-hash: 8dabd552a0b29787a9e76ec735db40a94a98d2c321323f743486f7a983a3748b
-updated: 2017-02-22T11:22:57.362383329+01:00
+hash: 790bc45f93d44b94087577c1b9d4bf5a26fe564287aad8c1f03395f38fbfc769
+updated: 2017-02-27T14:42:01.032001905+01:00
 imports:
 - name: github.com/artyom/untar
   version: 02ed5a2449a661eb02b1e3d658524223ab726412
@@ -58,15 +58,21 @@ imports:
   - api/types
   - api/types/blkiodev
   - api/types/container
+  - api/types/events
   - api/types/filters
+  - api/types/image
   - api/types/mount
   - api/types/network
+  - api/types/reference
   - api/types/registry
   - api/types/strslice
   - api/types/swarm
+  - api/types/time
   - api/types/versions
+  - api/types/volume
   - cli/config
   - cli/config/configfile
+  - client
   - daemon/graphdriver
   - distribution
   - distribution/metadata
@@ -97,12 +103,12 @@ imports:
   - pkg/promise
   - pkg/random
   - pkg/reexec
-  - pkg/stdcopy
   - pkg/stringid
   - pkg/system
   - pkg/tarsum
   - pkg/term
   - pkg/term/windows
+  - pkg/tlsconfig
   - pkg/useragent
   - plugin/v2
   - reference
@@ -129,8 +135,6 @@ imports:
   version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
-- name: github.com/hashicorp/go-cleanhttp
-  version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/hashicorp/hcl
   version: 99ce73d4fe576449f7a689d4fc2b2ad09a86bdaa
   subpackages:

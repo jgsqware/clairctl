@@ -13,11 +13,13 @@ import (
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/coreos/pkg/capnslog"
 	"github.com/jgsqware/clairctl/xstrings"
 	"github.com/jgsqware/xnet"
 	"github.com/spf13/viper"
 )
+
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "config")
 
 var errNoInterfaceProvided = errors.New("could not load configuration: no interface provided")
 var errInvalidInterface = errors.New("Interface does not exist")
@@ -57,17 +59,22 @@ type config struct {
 
 // Init reads in config file and ENV variables if set.
 func Init(cfgFile string, logLevel string, noClean bool) {
+
 	NoClean = noClean
-	lvl := logrus.WarnLevel
+
+	lvl := capnslog.WARNING
 	if logLevel != "" {
+		// Initialize logging system
 		var err error
-		lvl, err = logrus.ParseLevel(logLevel)
+		lvl, err = capnslog.ParseLevel(strings.ToUpper(logLevel))
 		if err != nil {
-			logrus.Warningf("Wrong Log level %v, defaults to [Warning]", logLevel)
-			lvl = logrus.WarnLevel
+			log.Warningf("Wrong Log level %v, defaults to [Warning]", logLevel)
+			lvl = capnslog.WARNING
 		}
+
 	}
-	logrus.SetLevel(lvl)
+	capnslog.SetGlobalLogLevel(lvl)
+	capnslog.SetFormatter(capnslog.NewPrettyFormatter(os.Stdout, false))
 
 	viper.SetEnvPrefix("clairctl")
 	viper.SetConfigName("clairctl")        // name of config file (without extension)
@@ -79,9 +86,9 @@ func Init(cfgFile string, logLevel string, noClean bool) {
 	}
 	err := viper.ReadInConfig()
 	if err != nil {
-		logrus.Debugf("No config file used")
+		log.Debugf("No config file used")
 	} else {
-		logrus.Debugf("Using config file: %v", viper.ConfigFileUsed())
+		log.Debugf("Using config file: %v", viper.ConfigFileUsed())
 	}
 
 	if viper.Get("clair.uri") == nil {
@@ -152,7 +159,7 @@ func Print() {
 	cfg := values()
 	cfgBytes, err := yaml.Marshal(cfg)
 	if err != nil {
-		logrus.Fatalf("marshalling configuration: %v", err)
+		log.Fatalf("marshalling configuration: %v", err)
 	}
 
 	fmt.Println("Configuration")
@@ -274,7 +281,7 @@ func LocalServerIP() (string, error) {
 	localInterfaceConfig := viper.GetString("clairctl.interface")
 
 	if localIP == "" {
-		logrus.Infoln("retrieving interface for local IP")
+		log.Info("retrieving interface for local IP")
 		var err error
 		var localInterface net.Interface
 		localInterface, err = translateInterface(localInterfaceConfig)
@@ -293,7 +300,7 @@ func LocalServerIP() (string, error) {
 func translateInterface(localInterface string) (net.Interface, error) {
 
 	if localInterface != "" {
-		logrus.Debugln("interface provided, looking for " + localInterface)
+		log.Debug("interface provided, looking for " + localInterface)
 		netInterface, err := net.InterfaceByName(localInterface)
 		if err != nil {
 			return net.Interface{}, err
@@ -301,10 +308,10 @@ func translateInterface(localInterface string) (net.Interface, error) {
 		return *netInterface, nil
 	}
 
-	logrus.Debugln("no interface provided, looking for docker0")
+	log.Debug("no interface provided, looking for docker0")
 	netInterface, err := net.InterfaceByName("docker0")
 	if err != nil {
-		logrus.Debugln("docker0 not found, looking for first connected broadcast interface")
+		log.Debug("docker0 not found, looking for first connected broadcast interface")
 		interfaces, err := net.Interfaces()
 		if err != nil {
 			return net.Interface{}, err
@@ -323,7 +330,7 @@ func translateInterface(localInterface string) (net.Interface, error) {
 
 func Clean() error {
 	if IsLocal && !NoClean {
-		logrus.Debugln("cleaning temporary local repository")
+		log.Debug("cleaning temporary local repository")
 		err := os.RemoveAll(TmpLocal())
 
 		if err != nil {

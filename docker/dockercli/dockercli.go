@@ -11,8 +11,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/artyom/untar"
+	"github.com/coreos/pkg/capnslog"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/docker/client"
@@ -22,6 +22,8 @@ import (
 	"github.com/jgsqware/clairctl/config"
 	"github.com/opencontainers/go-digest"
 )
+
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockercli")
 
 //GetLocalManifest retrieve manifest for local image
 func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
@@ -84,8 +86,8 @@ func save(imageName string) (distribution.Manifest, error) {
 		return nil, err
 	}
 
-	logrus.Debugln("docker image to save: ", imageName)
-	logrus.Debugln("saving in: ", path)
+	log.Debug("docker image to save: ", imageName)
+	log.Debug("saving in: ", path)
 
 	cli, err := client.NewEnvClient()
 	if err != nil {

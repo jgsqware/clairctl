@@ -5,7 +5,6 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
@@ -35,14 +34,14 @@ var analyzeCmd = &cobra.Command{
 		image, manifest, err := docker.RetrieveManifest(config.ImageName, true)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
+			log.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
 		}
 
 		startLocalServer()
 		if err := clair.Push(image, manifest); err != nil {
 			if err != nil {
 				fmt.Println(errInternalError)
-				logrus.Fatalf("pushing image %q: %v", image.String(), err)
+				log.Fatalf("pushing image %q: %v", image.String(), err)
 			}
 		}
 
@@ -50,7 +49,7 @@ var analyzeCmd = &cobra.Command{
 		err = template.Must(template.New("analysis").Parse(analyzeTplt)).Execute(os.Stdout, analysis)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("rendering analysis: %v", err)
+			log.Fatalf("rendering analysis: %v", err)
 		}
 	},
 }

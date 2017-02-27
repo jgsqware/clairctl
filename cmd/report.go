@@ -5,7 +5,6 @@ import (
 	"os"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
@@ -29,7 +28,7 @@ var reportCmd = &cobra.Command{
 
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
+			log.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
 		}
 
 		analyzes := clair.Analyze(image, manifest)
@@ -43,12 +42,12 @@ var reportCmd = &cobra.Command{
 			html, err := clair.ReportAsHTML(analyzes)
 			if err != nil {
 				fmt.Println(errInternalError)
-				logrus.Fatalf("generating HTML report: %v", err)
+				log.Fatalf("generating HTML report: %v", err)
 			}
 			err = saveReport(imageName, string(html))
 			if err != nil {
 				fmt.Println(errInternalError)
-				logrus.Fatalf("saving HTML report: %v", err)
+				log.Fatalf("saving HTML report: %v", err)
 			}
 
 		case "json":
@@ -56,17 +55,17 @@ var reportCmd = &cobra.Command{
 
 			if err != nil {
 				fmt.Println(errInternalError)
-				logrus.Fatalf("indenting JSON: %v", err)
+				log.Fatalf("indenting JSON: %v", err)
 			}
 			err = saveReport(imageName, string(json))
 			if err != nil {
 				fmt.Println(errInternalError)
-				logrus.Fatalf("saving JSON report: %v", err)
+				log.Fatalf("saving JSON report: %v", err)
 			}
 
 		default:
 			fmt.Printf("Unsupported Report format: %v", clair.Report.Format)
-			logrus.Fatalf("Unsupported Report format: %v", clair.Report.Format)
+			log.Fatalf("Unsupported Report format: %v", clair.Report.Format)
 		}
 	},
 }

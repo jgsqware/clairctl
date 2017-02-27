@@ -3,7 +3,6 @@ package clair
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 

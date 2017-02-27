@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
@@ -27,13 +26,13 @@ var pushCmd = &cobra.Command{
 		image, manifest, err := docker.RetrieveManifest(config.ImageName, true)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
+			log.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
 		}
 
 		if err := clair.Push(image, manifest); err != nil {
 			if err != nil {
 				fmt.Println(errInternalError)
-				logrus.Fatalf("pushing image %q: %v", image.String(), err)
+				log.Fatalf("pushing image %q: %v", image.String(), err)
 			}
 		}
 		fmt.Printf("%v has been pushed to Clair\n", image.String())
@@ -44,12 +43,12 @@ func startLocalServer() {
 	sURL, err := config.LocalServerIP()
 	if err != nil {
 		fmt.Println(errInternalError)
-		logrus.Fatalf("retrieving internal server IP: %v", err)
+		log.Fatalf("retrieving internal server IP: %v", err)
 	}
 	err = server.Serve(sURL)
 	if err != nil {
 		fmt.Println(errInternalError)
-		logrus.Fatalf("starting local server: %v", err)
+		log.Fatalf("starting local server: %v", err)
 	}
 }
 

@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
@@ -91,7 +90,7 @@ func blobsURI(registry string, name string, digest string) string {
 func insertRegistryMapping(layerDigest string, registryURI string) {
 
 	hostURL, _ := dockerdist.GetPushURL(registryURI)
-	logrus.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
+	log.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
 	registryMapping[layerDigest] = hostURL.String()
 }
 

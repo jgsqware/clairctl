@@ -2,7 +2,7 @@ package: github.com/jgsqware/clairctl
 import:
 - package: github.com/artyom/untar
 - package: github.com/coreos/clair
-  version: ^1.2.5
+  version: ^1.2.6
   subpackages:
   - api/v1
   - utils/types
@@ -18,7 +18,7 @@ import:
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: golang.org/x/net
-  version: d4c55e66d8c3a2f3382d264b08e3e3454a66355a
+  version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
   subpackages:
   - context
 - package: gopkg.in/yaml.v2

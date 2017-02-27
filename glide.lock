@@ -1,5 +1,5 @@
-hash: 790bc45f93d44b94087577c1b9d4bf5a26fe564287aad8c1f03395f38fbfc769
-updated: 2017-02-27T14:42:01.032001905+01:00
+hash: 49e893318a6d65c72c200bfab2fa128e649e63b0b43a863a238244c4e686f1ae
+updated: 2017-02-27T14:49:34.224124658+01:00
 imports:
 - name: github.com/artyom/untar
   version: 02ed5a2449a661eb02b1e3d658524223ab726412
@@ -236,7 +236,7 @@ imports:
   - ed25519/internal/edwards25519
   - ssh
 - name: golang.org/x/net
-  version: d4c55e66d8c3a2f3382d264b08e3e3454a66355a
+  version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
   subpackages:
   - context
   - context/ctxhttp

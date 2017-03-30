@@ -53,6 +53,24 @@ clair:
     format: html
 ```
 
+# Building the latest binaries
+
+**clairctl** requires at least Go 1.7.
+
+Install Glide:
+```
+curl https://glide.sh/get | sh
+```
+
+Clone and build:
+```
+git clone github.com/jgsqware/clairctl  $GOPATH/src/github.com/jgsqware/clairctl
+glide install -v
+go build
+```
+
+This will result in a `clairctl` executable in the `$GOPATH/src/github.com/jgsqware/clairctl` folder.
+
 # Contribution and Test
 
 Go to /contrib folder

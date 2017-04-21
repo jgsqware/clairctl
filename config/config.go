@@ -43,8 +43,8 @@ type authConfig struct {
 	InsecureSkipVerify bool
 }
 type clairctlConfig struct {
-	IP, Interface, TempFolder string
-	Port                      int
+	IP, Interface, BindAddr, TempFolder string
+	Port                                int
 }
 type docker struct {
 	InsecureRegistries []string
@@ -119,6 +119,9 @@ func Init(cfgFile string, logLevel string, noClean bool) {
 	if viper.Get("clairctl.interface") == nil {
 		viper.Set("clairctl.interface", "")
 	}
+	if viper.Get("clairctl.bind_addr") == nil {
+		viper.Set("clairctl.bind_addr", "")
+	}
 	if viper.Get("clairctl.tempFolder") == nil {
 		viper.Set("clairctl.tempFolder", "/tmp/clairctl")
 	}
@@ -146,6 +149,7 @@ func values() config {
 		Clairctl: clairctlConfig{
 			IP:         viper.GetString("clairctl.ip"),
 			Port:       viper.GetInt("clairctl.port"),
+			BindAddr:   viper.GetString("clairctl.bind_addr"),
 			TempFolder: viper.GetString("clairctl.tempFolder"),
 			Interface:  viper.GetString("clairctl.interface"),
 		},

@@ -27,7 +27,7 @@ func (imageAnalysis ImageAnalysis) String() string {
 
 //LastLayer return the last layer of ImageAnalysis
 func (imageAnalysis ImageAnalysis) LastLayer() *v1.Layer {
-	return imageAnalysis.Layers[len(imageAnalysis.Layers)-1].Layer
+	return imageAnalysis.Layers[0].Layer
 }
 
 func (imageAnalysis ImageAnalysis) CountVulnerabilities(l v1.Layer) int {

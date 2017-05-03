@@ -66,6 +66,7 @@ Clone and build:
 ```
 git clone github.com/jgsqware/clairctl  $GOPATH/src/github.com/jgsqware/clairctl
 glide install -v
+go generate ./clair
 go build
 ```
 

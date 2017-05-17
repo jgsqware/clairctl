@@ -21,7 +21,9 @@ var pushCmd = &cobra.Command{
 			os.Exit(1)
 		}
 
-		startLocalServer()
+		if config.IsLocal {
+			startLocalServer()
+		}
 		config.ImageName = args[0]
 		image, manifest, err := docker.RetrieveManifest(config.ImageName, true)
 		if err != nil {

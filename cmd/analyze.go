@@ -37,7 +37,10 @@ var analyzeCmd = &cobra.Command{
 			log.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
 		}
 
-		startLocalServer()
+		if config.IsLocal {
+			startLocalServer()
+		}
+
 		if err := clair.Push(image, manifest); err != nil {
 			if err != nil {
 				fmt.Println(errInternalError)

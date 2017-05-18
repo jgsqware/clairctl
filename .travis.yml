@@ -8,8 +8,13 @@ install:
   - glide install -v
 
 script:
+- go generate ./clair
 - go build -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)" -v
 
+addons:
+  artifacts: true
+  paths:
+    - clairctl
 deploy:
   provider: releases
   api_key:

@@ -15,6 +15,7 @@ import (
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/docker/reference"
+	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker/dockerdist"
 	"github.com/spf13/viper"
 )
@@ -52,12 +53,15 @@ func Push(image reference.NamedTagged, manifest distribution.Manifest) error {
 		}
 		return layers.pushAll()
 	default:
-		return errors.New("Unsupported Schema version.")
+		return errors.New("unsupported Schema version")
 	}
 }
 
 func pushLayer(layer v1.LayerEnvelope) error {
-	layer = auth(layer)
+	if config.IsLocal {
+		layer = auth(layer)
+	}
+
 	lJSON, err := json.Marshal(layer)
 	if err != nil {
 		return fmt.Errorf("marshalling layer: %v", err)

@@ -8,6 +8,11 @@ install:
   - glide install -v
   - go get -u github.com/jteeuwen/go-bindata/...
 
+addons:
+  artifacts: true
+  paths:
+    - ./clairctl
+    
 script:
 - go generate ./clair
 - go build -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)" -v

@@ -91,7 +91,6 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	}
 
 	metaHeaders := map[string][]string{}
-
 	endpoints, err := service.LookupPullEndpoints(image.Hostname())
 	if err != nil {
 		log.Debugf("registry.LookupPullEndpoints error: %v", err)
@@ -139,7 +138,8 @@ func GetPushURL(hostname string) (*url.URL, error) {
 		if isInsecureRegistry(endpoint.URL.Host) {
 			endpoint.URL.Scheme = "http"
 		}
-		return endpoint.URL, nil
+
+		return url.Parse(endpoint.URL.String() + "/v2")
 	}
 
 	return nil, errors.New("No endpoints found")

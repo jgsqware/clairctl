@@ -60,9 +60,12 @@ func (layers *layering) pushAll() error {
 
 		//FIXME Update to TLS
 		if config.IsLocal {
-			payload.Layer.Path += "/layer.tar"
+			// Note that the local image may include a repository name
+			payload.Layer.Path = layers.hURL + "/" + payload.Layer.Path + "/layer.tar"
+		} else {
+			payload.Layer.Path = strings.Replace(payload.Layer.Path, layers.image.Hostname(), layers.hURL, 1)
 		}
-		payload.Layer.Path = strings.Replace(payload.Layer.Path, layers.image.Hostname(), layers.hURL, 1)
+
 		if err := pushLayer(payload); err != nil {
 			log.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
 			if err != ErrUnanalizedLayer {

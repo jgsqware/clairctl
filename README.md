@@ -55,7 +55,7 @@ clair:
 
 # Building the latest binaries
 
-**clairctl** requires at least Go 1.7.
+**clairctl** requires Go 1.7+.
 
 Install Glide:
 ```
@@ -67,6 +67,7 @@ Clone and build:
 git clone github.com/jgsqware/clairctl  $GOPATH/src/github.com/jgsqware/clairctl
 cd $GOPATH/src/github.com/jgsqware/clairctl
 glide install -v
+go generate ./clair
 go build
 ```
 

@@ -15,13 +15,18 @@ addons:
     
 script:
 - go generate ./clair
-- go build -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)" -v
+- go get github.com/mitchellh/gox
+- gox -os="linux" -os="darwin" -arch="amd64 386" -output="out/{{.Dir}}-{{.OS}}-{{.Arch}}" -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)" -v
 
 deploy:
   provider: releases
   api_key:
     secure: HgOSNmBsqtA3CutTWnRNp2LNROeoPYyU+zO6ZzFH+tkG8Bif+KEtQx9fRv2YNB7+TSYUkaoT3v0XqkHhKe7GmhTD9mZ2v5isKHhD/FhP/qRDAxugzf66+mJJBhQ5tS9gz2hVK1E+tnHK1L3IVIh47zeXEd2VpciuxPaTwC2zAWi97EHFivjClD3uE2cc1HztDF95cq+eZzo5hfJn4mYuaMfnIGdPD3yKZY1+hQ7aby/+MxNyIbVwefgxV/fNPiVmM9u07+uzHWHKTikp8UyHvdKOyJp31S20i22velRC0xf6g4/d9rwfaw1zFMnjeA4ClRGwNief0cfKVtB7/KMwGC8UNiHvtDEIJn5yelSpqatde96eK7NJ58uTYsWRHM5RPW9MphpxhHPzBNXiz2m9sfZ7Frf3NeA94nZT1WAkoF4jjgWPNbPjOJzpz80dzzbNFUSWSrJFrJSaleLQwdPMi0fwTh2VG6gvhqYcLqW0GMVIUHFA905SuJwXje+IPh74RtjDmyMrwaONZQDqDfldXvY04kmoUsEkWPQkI3gQivp8Ep+IGpz+L8LPG5GR3whCu+OQqto1yIAFFdveFuD1VBgVvqJQwODkDkYux1UJNek1vbgtuGxuThWILZ16WcrxBl0l/FhFqxQ76tsH5A+57euVc5SFHDN6f7c5K2rzLcU=
-  file: clairctl
+  file: 
+    - out/clairctl-darwin-386
+    - out/clairctl-darwin-amd64
+    - out/clairctl-linux-386
+    - out/clairctl-linux-amd64
   skip_cleanup: true
   on:
     repo: jgsqware/clairctl

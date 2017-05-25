@@ -16,7 +16,7 @@ addons:
 script:
 - go generate ./clair
 - go get github.com/mitchellh/gox
-- gox -os="linux" -os="darwin" -arch="amd64 386" -output="out/{{.Dir}}-{{.OS}}-{{.Arch}}" -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)" -v
+- gox -os="linux" -os="darwin" -arch="amd64 386" -output="out/{{.Dir}}-{{.OS}}-{{.Arch}}" -ldflags "-X github.com/jgsqware/clairctl/cmd.version=$(cat VERSION)"
 
 deploy:
   provider: releases

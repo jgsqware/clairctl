@@ -6,6 +6,8 @@
 Clairctl is a lightweight command-line tool doing the bridge between Registries as Docker Hub, Docker Registry or Quay.io, and the CoreOS vulnerability tracker, Clair.
 Clairctl will play as reverse proxy for authentication.
 
+Clairctl version is align with the [CoreOS Clair](https://github.com/coreos/clair) supported version.
+
 # Usage
 
 [![asciicast](https://asciinema.org/a/41461.png)](https://asciinema.org/a/41461)
@@ -55,7 +57,7 @@ clair:
 
 # Building the latest binaries
 
-**clairctl** requires Go 1.7+.
+**clairctl** requires Go 1.8+.
 
 Install Glide:
 ```

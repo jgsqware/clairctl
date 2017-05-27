@@ -66,7 +66,7 @@ curl https://glide.sh/get | sh
 
 Clone and build:
 ```
-git clone github.com/jgsqware/clairctl  $GOPATH/src/github.com/jgsqware/clairctl
+git clone git@github.com:jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
 cd $GOPATH/src/github.com/jgsqware/clairctl
 glide install -v
 go generate ./clair

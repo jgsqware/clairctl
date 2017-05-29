@@ -9,9 +9,14 @@ install:
   - go get -u github.com/jteeuwen/go-bindata/...
 
 addons:
-  artifacts: true
-  paths:
-    - ./clairctl
+  artifacts:
+    paths:
+      - out/clairctl-darwin-386
+      - out/clairctl-darwin-amd64
+      - out/clairctl-linux-386
+      - out/clairctl-linux-amd64
+    target_paths: latest
+    working_dir: out
     
 script:
 - go generate ./clair

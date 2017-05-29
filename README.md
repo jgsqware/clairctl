@@ -8,6 +8,17 @@ Clairctl will play as reverse proxy for authentication.
 
 Clairctl version is align with the [CoreOS Clair](https://github.com/coreos/clair) supported version.
 
+# Installation
+
+  ## Released version:
+    Go to [Release](https://github.com/jgsqware/clairctl/releases) and download your corresponding version
+
+  ## Master branch version
+
+    ```
+    curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | sh
+    ```
+
 # Usage
 
 [![asciicast](https://asciinema.org/a/41461.png)](https://asciinema.org/a/41461)

@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -96,7 +97,7 @@ func save(imageName string) (distribution.Manifest, error) {
 
 	img, err := cli.ImageSave(context.Background(), []string{imageName})
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("cannot save image %s: %s", imageName, err)
 	}
 	all, err := ioutil.ReadAll(img)
 	if err != nil {

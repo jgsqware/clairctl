@@ -58,7 +58,7 @@ func Push(image reference.NamedTagged, manifest distribution.Manifest) error {
 }
 
 func pushLayer(layer v1.LayerEnvelope) error {
-	if config.IsLocal {
+	if !config.IsLocal {
 		layer = auth(layer)
 	}
 

@@ -11,13 +11,12 @@ Clairctl version is align with the [CoreOS Clair](https://github.com/coreos/clai
 # Installation
 
   ## Released version:
-    Go to [Release](https://github.com/jgsqware/clairctl/releases) and download your corresponding version
+  Go to [Release](https://github.com/jgsqware/clairctl/releases) and download your corresponding version
 
   ## Master branch version
 
-    ```
     curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | sh
-    ```
+    
 
 # Usage
 

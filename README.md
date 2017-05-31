@@ -29,53 +29,6 @@ Clairctl version is align with the [CoreOS Clair](https://github.com/coreos/clai
 
 clairctl can be used for Docker Hub and self-hosted Registry
 
-# Build from source
-
-## Cross compile from a mac
-
-Install go with cross compilers options:
-`$ brew install go --with-cc-common`
-
-The above `--with-cc-common` can be replaced with `--with-cc-all` if you need to compile for other archs.
-
-Install glide
-`$ brew install glide`
-
-Set my GOPATH
-`GOPATH=/Users/username/dev/go/`
-
-Then the steps you recommended above:
-```
-git clone http://github.com/jgsqware/clairctl $GOPATH/src/github.com/jgsqware/clairctl
-[...TRUNCATED...]
-username@macbook $ cd $GOPATH/src/github.com/jgsqware/clairctl
-username@macbook $ glide install -v
-[INFO] 	Downloading dependencies. Please wait...
-[INFO] 	--> Fetching github.com/fsouza/go-dockerclient.
-[...TRUNCATED...]
-[INFO] 	--> Fetching gopkg.in/yaml.v2.
-[INFO] 	Setting references.
-[INFO] 	--> Setting version for github.com/coreos/pkg to 2c77715c4df99b5420ffcae14ead08f52104065d.
-[...TRUNCATED...]
-[INFO] 	--> Setting version for gopkg.in/yaml.v2 to f7716cbe52baa25d2e9b0d0da546fcf909fc16b4.
-[INFO] 	Exporting resolved dependencies...
-[INFO] 	--> Exporting github.com/artyom/untar
-[...TRUNCATED...]
-[INFO] 	--> Exporting gopkg.in/yaml.v2
-[INFO] 	Replacing existing vendor dependencies
-[INFO] 	Removing nested vendor and Godeps/_workspace directories...
-[INFO] 	Removing: /Users/username/dev/go/src/github.com/jgsqware/clairctl/vendor/github.com/coreos/clair/contrib/analyze-local-images/vendor
-[INFO] 	Removing: /Users/username/dev/go/src/github.com/jgsqware/clairctl/vendor/github.com/coreos/clair/vendor
-[INFO] 	Removing: /Users/username/dev/go/src/github.com/jgsqware/clairctl/vendor/github.com/docker/distribution/vendor
-[INFO] 	Removing: /Users/username/dev/go/src/github.com/jgsqware/clairctl/vendor/github.com/docker/docker/vendor
-[INFO] 	Removing: /Users/username/dev/go/src/github.com/jgsqware/clairctl/vendor/github.com/opencontainers/runc/Godeps/_workspace/src/github.com/docker/docker/vendor
-[INFO] 	Removing: /Users/username/dev/go/src/github.com/jgsqware/clairctl/vendor/github.com/opencontainers/runc/Godeps/_workspace
-[INFO] 	Removing Godep rewrites for /Users/username/dev/go/src/github.com/jgsqware/clairctl/vendor/github.com/opencontainers/runc
-username@macbook $ go build
-username@macbook $ GOOS=linux GOARCH=386 CGO_ENABLED=0 go build -o clairctl.linux.i386
-username@macbook $ GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -o clairctl.linux.amd64
-```
-
 # Command
 
 ```

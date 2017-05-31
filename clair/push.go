@@ -2,18 +2,22 @@ package clair
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
-	"github.com/jgsqware/clairctl/config"
-	"github.com/jgsqware/clairctl/xstrings"
+	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/docker/reference"
+	"github.com/jgsqware/clairctl/config"
+	"github.com/jgsqware/clairctl/docker/dockerdist"
+	"github.com/spf13/viper"
 )
 
 // ErrUnanalizedLayer is returned when the layer was not correctly analyzed
@@ -21,61 +25,43 @@ var ErrUnanalizedLayer = errors.New("layer cannot be analyzed")
 
 var registryMapping map[string]string
 
-//Push image to Clair for analysis
-func Push(image reference.Named, manifest schema1.SignedManifest) error {
-	layerCount := len(manifest.FSLayers)
-
-	parentID := ""
-
-	if layerCount == 0 {
-		logrus.Warningln("there is no layer to push")
-	}
-	localIP, err := config.LocalServerIP()
+func Push(image reference.NamedTagged, manifest distribution.Manifest) error {
+	layers, err := newLayering(image)
 	if err != nil {
 		return err
 	}
-	hURL := fmt.Sprintf("http://%v/v2", localIP)
-	if config.IsLocal {
-		hURL = strings.Replace(hURL, "/v2", "/local", -1)
-		logrus.Infof("using %v as local url", hURL)
+
+	switch manifest.(type) {
+	case schema1.SignedManifest:
+		for _, l := range manifest.(schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.pushAll()
+	case *schema1.SignedManifest:
+		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.pushAll()
+	case schema2.DeserializedManifest:
+		for _, l := range manifest.(schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
+		}
+		return layers.pushAll()
+	case *schema2.DeserializedManifest:
+		for _, l := range manifest.(*schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
+		}
+		return layers.pushAll()
+	default:
+		return errors.New("unsupported Schema version")
 	}
-
-	for index, layer := range manifest.FSLayers {
-		blobsum := layer.BlobSum.String()
-		if config.IsLocal {
-			blobsum = strings.TrimPrefix(blobsum, "sha256:")
-		}
-
-		lUID := xstrings.Substr(blobsum, 0, 12)
-		logrus.Infof("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
-
-		insertRegistryMapping(blobsum, image.Hostname())
-		payload := v1.LayerEnvelope{Layer: &v1.Layer{
-			Name:       blobsum,
-			Path:       blobsURI(image.Hostname(), image.RemoteName(), blobsum),
-			ParentName: parentID,
-			Format:     "Docker",
-		}}
-
-		//FIXME Update to TLS
-		if config.IsLocal {
-			payload.Layer.Path += "/layer.tar"
-		}
-		payload.Layer.Path = strings.Replace(payload.Layer.Path, image.Hostname(), hURL, 1)
-		if err := pushLayer(payload); err != nil {
-			logrus.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
-			if err != ErrUnanalizedLayer {
-				return err
-			}
-			parentID = ""
-		} else {
-			parentID = payload.Layer.Name
-		}
-	}
-	return nil
 }
 
 func pushLayer(layer v1.LayerEnvelope) error {
+	if !config.IsLocal {
+		layer = auth(layer)
+	}
+
 	lJSON, err := json.Marshal(layer)
 	if err != nil {
 		return fmt.Errorf("marshalling layer: %v", err)
@@ -105,19 +91,42 @@ func pushLayer(layer v1.LayerEnvelope) error {
 	return nil
 }
 
+func auth(layer v1.LayerEnvelope) v1.LayerEnvelope {
+
+	out, _ := url.Parse(layer.Layer.Path)
+	client := &http.Client{Transport: &http.Transport{
+		TLSClientConfig:    &tls.Config{InsecureSkipVerify: viper.GetBool("auth.insecureSkipVerify")},
+		DisableCompression: true,
+	}}
+
+	log.Debugf("auth.insecureSkipVerify: %v", viper.GetBool("auth.insecureSkipVerify"))
+	log.Debugf("request.URL.String(): %v", out)
+	req, _ := http.NewRequest("HEAD", out.String(), nil)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("response error: %v", err)
+		return v1.LayerEnvelope{}
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		log.Info("pull from clair is unauthorized")
+		dockerdist.AuthenticateResponse(client, resp, req)
+	}
+	layer.Layer.Headers = make(map[string]string)
+	layer.Layer.Headers["Authorization"] = req.Header.Get("Authorization")
+	return layer
+}
+
 func blobsURI(registry string, name string, digest string) string {
 	return strings.Join([]string{registry, name, "blobs", digest}, "/")
 }
 
 func insertRegistryMapping(layerDigest string, registryURI string) {
-	if strings.Contains(registryURI, "docker") {
-		registryURI = "https://" + registryURI + "/v2"
 
-	} else {
-		registryURI = "http://" + registryURI + "/v2"
-	}
-	logrus.Debugf("Saving %s[%s]", layerDigest, registryURI)
-	registryMapping[layerDigest] = registryURI
+	hostURL, _ := dockerdist.GetPushURL(registryURI)
+	log.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
+	registryMapping[layerDigest] = hostURL.String()
 }
 
 //GetRegistryMapping return the registryURI corresponding to the layerID passed as parameter

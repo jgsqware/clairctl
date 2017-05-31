@@ -1,5 +1,5 @@
-hash: a7ccb098ac6c0cd847c8a67cfdc8267971ea01bb3b8bd020457b48817b62574c
-updated: 2016-10-26T12:02:37.277593384+02:00
+hash: b93acdfc967a284ed094d4c1c7e40ef6e5e2df6c51dbcffa3eabf9f3fe142ab8
+updated: 2017-02-27T14:55:57.838212231+01:00
 imports:
 - name: github.com/artyom/untar
   version: 02ed5a2449a661eb02b1e3d658524223ab726412
@@ -12,7 +12,7 @@ imports:
   subpackages:
   - quantile
 - name: github.com/coreos/clair
-  version: 5157f27eac48bb4a0eb41f99e8fc0f40039bef09
+  version: 94bcf91cdf3886452ba329cb3a3857190f24e68f
   subpackages:
   - api/context
   - api/v1
@@ -33,10 +33,10 @@ imports:
   - capnslog
   - timeutil
 - name: github.com/docker/distribution
-  version: fbb70dc3a14ca65cdac3aaf5e5122b03b42f6fbc
+  version: 129ad8ea0c3760d878b34cffdb9c3be874a7b2f7
   subpackages:
   - context
-  - digest
+  - digestset
   - manifest
   - manifest/manifestlist
   - manifest/schema1
@@ -46,27 +46,33 @@ imports:
   - registry/api/v2
   - registry/client
   - registry/client/auth
+  - registry/client/auth/challenge
   - registry/client/transport
   - registry/storage/cache
   - registry/storage/cache/memory
   - uuid
 - name: github.com/docker/docker
-  version: 62ff3e90835c3c572051afbbbac53303e57a5c89
+  version: 48dd90d3985889ca008faa3b041bf31d2ada95c5
   subpackages:
   - api
-  - api/server/httputils
   - api/types
   - api/types/blkiodev
   - api/types/container
+  - api/types/events
   - api/types/filters
+  - api/types/image
   - api/types/mount
   - api/types/network
+  - api/types/reference
   - api/types/registry
   - api/types/strslice
   - api/types/swarm
+  - api/types/time
   - api/types/versions
-  - cliconfig
-  - cliconfig/configfile
+  - api/types/volume
+  - cli/config
+  - cli/config/configfile
+  - client
   - daemon/graphdriver
   - distribution
   - distribution/metadata
@@ -75,6 +81,7 @@ imports:
   - image
   - image/v1
   - layer
+  - oci
   - opts
   - pkg/archive
   - pkg/chrootarchive
@@ -96,17 +103,18 @@ imports:
   - pkg/promise
   - pkg/random
   - pkg/reexec
-  - pkg/stdcopy
   - pkg/stringid
   - pkg/system
   - pkg/tarsum
   - pkg/term
   - pkg/term/windows
+  - pkg/tlsconfig
   - pkg/useragent
+  - plugin/v2
   - reference
   - registry
 - name: github.com/docker/go-connections
-  version: 988efe982fdecb46f01d53465878ff1f2ff411ce
+  version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
   subpackages:
   - nat
   - sockets
@@ -119,8 +127,6 @@ imports:
   version: 1b2437bc582b3cfbb341ee5a29f8ef5b42912ff2
 - name: github.com/fsnotify/fsnotify
   version: bd2828f9f176e52d7222e565abb2d338d3f3c103
-- name: github.com/fsouza/go-dockerclient
-  version: ec3d770b89171c6f3318c98a0b763ee827bebe5e
 - name: github.com/golang/protobuf
   version: 5fc2294e655b78ed8a02082d37808d46c17d7e64
   subpackages:
@@ -129,8 +135,6 @@ imports:
   version: 14f550f51af52180c2eefed15e5fd18d63c0a64a
 - name: github.com/gorilla/mux
   version: e444e69cbd2e2e3e0749a2f3c717cec491552bbf
-- name: github.com/hashicorp/go-cleanhttp
-  version: ad28ea4487f05916463e2423a55166280e8254b5
 - name: github.com/hashicorp/hcl
   version: 99ce73d4fe576449f7a689d4fc2b2ad09a86bdaa
   subpackages:
@@ -144,6 +148,8 @@ imports:
   - json/token
 - name: github.com/inconshreveable/mousetrap
   version: 76626ae9c91c4f2a10f34cad8ce83ea42c93bb75
+- name: github.com/jgsqware/xnet
+  version: 13630f0737d214dba8344df649039c19551553d8
 - name: github.com/julienschmidt/httprouter
   version: 21439ef4d70ba4f3e2a5ed9249e7b03af4019b40
 - name: github.com/kr/fs
@@ -160,11 +166,21 @@ imports:
   version: ce2922f643c8fd76b46cadc7f404a06282678b34
 - name: github.com/mitchellh/mapstructure
   version: 482a9fd5fa83e8c4e7817413b80f3eb8feec03ef
+- name: github.com/Nvveen/Gotty
+  version: cd527374f1e5bff4938207604a14f2e38a9cf512
+- name: github.com/opencontainers/go-digest
+  version: 21dfd564fd89c944783d00d069f33e3e7123c448
 - name: github.com/opencontainers/runc
   version: 157a96a42860b16b50401d131e257c7d7f281d7b
   subpackages:
+  - libcontainer/configs
+  - libcontainer/devices
   - libcontainer/system
   - libcontainer/user
+- name: github.com/opencontainers/runtime-spec
+  version: 1c7c27d043c2a5e513a44084d2b10d77d1402b8c
+  subpackages:
+  - specs-go
 - name: github.com/pelletier/go-buffruneio
   version: df1e16fde7fc330a0ca68167c23bf7ed6ac31d6d
 - name: github.com/pelletier/go-toml
@@ -190,7 +206,7 @@ imports:
 - name: github.com/prometheus/procfs
   version: 406e5b7bfd8201a36e2bb5f7bdae0b03380c2ce8
 - name: github.com/Sirupsen/logrus
-  version: 4b6ea7319e214d98c938f12692336f7ca9348d6b
+  version: c078b1e43f58d563c74cebe63c85789e76ddb627
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:
@@ -220,16 +236,11 @@ imports:
   - ed25519/internal/edwards25519
   - ssh
 - name: golang.org/x/net
-  version: d4c55e66d8c3a2f3382d264b08e3e3454a66355a
+  version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
   subpackages:
   - context
   - context/ctxhttp
-  - http2
-  - http2/hpack
-  - internal/timeseries
-  - lex/httplex
   - proxy
-  - trace
 - name: golang.org/x/sys
   version: c200b10b5d5e122be351b67af224adc6128af5bf
   subpackages:
@@ -244,17 +255,6 @@ imports:
   version: a4bde12657593d5e90d0533a3e4fd95e635124cb
   subpackages:
   - rate
-- name: google.golang.org/grpc
-  version: d3ddb4469d5a1b949fc7a7da7c1d6a0d1b6de994
-  subpackages:
-  - codes
-  - credentials
-  - grpclog
-  - internal
-  - metadata
-  - naming
-  - peer
-  - transport
 - name: gopkg.in/yaml.v2
   version: f7716cbe52baa25d2e9b0d0da546fcf909fc16b4
 testImports: []

@@ -5,9 +5,12 @@ import (
 	"strings"
 
 	"github.com/coreos/clair/api/v1"
+	"github.com/coreos/pkg/capnslog"
 	"github.com/jgsqware/clairctl/xstrings"
 	"github.com/spf13/viper"
 )
+
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "clair")
 
 var uri string
 var healthURI string
@@ -22,9 +25,9 @@ func (imageAnalysis ImageAnalysis) String() string {
 	return imageAnalysis.Registry + "/" + imageAnalysis.ImageName + ":" + imageAnalysis.Tag
 }
 
-//LastLayer return the last layer of ImageAnalysis
-func (imageAnalysis ImageAnalysis) LastLayer() *v1.Layer {
-	return imageAnalysis.Layers[len(imageAnalysis.Layers)-1].Layer
+//MostRecentLayer returns the most recent layer of an ImageAnalysis object
+func (imageAnalysis ImageAnalysis) MostRecentLayer() v1.LayerEnvelope {
+	return imageAnalysis.Layers[0]
 }
 
 func (imageAnalysis ImageAnalysis) CountVulnerabilities(l v1.Layer) int {

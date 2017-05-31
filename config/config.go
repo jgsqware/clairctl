@@ -1,28 +1,33 @@
 package config
 
 import (
-	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
+	"net"
 	"os"
-	"os/exec"
 	"os/user"
 	"strings"
 
 	"gopkg.in/yaml.v2"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/coreos/pkg/capnslog"
 	"github.com/jgsqware/clairctl/xstrings"
+	"github.com/jgsqware/xnet"
 	"github.com/spf13/viper"
 )
 
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "config")
+
+var errNoInterfaceProvided = errors.New("could not load configuration: no interface provided")
+var errInvalidInterface = errors.New("Interface does not exist")
 var ErrLoginNotFound = errors.New("user is not log in")
 
 var IsLocal = false
+var Insecure = false
+var NoClean = false
 
 var ImageName string
 
@@ -38,27 +43,38 @@ type authConfig struct {
 	InsecureSkipVerify bool
 }
 type clairctlConfig struct {
-	IP, TempFolder string
-	Port           int
+	IP, Interface, TempFolder string
+	Port                      int
 }
+type docker struct {
+	InsecureRegistries []string
+}
+
 type config struct {
 	Clair    clairConfig
 	Auth     authConfig
 	Clairctl clairctlConfig
+	Docker   docker
 }
 
 // Init reads in config file and ENV variables if set.
-func Init(cfgFile string, logLevel string) {
-	lvl := logrus.WarnLevel
+func Init(cfgFile string, logLevel string, noClean bool) {
+
+	NoClean = noClean
+
+	lvl := capnslog.WARNING
 	if logLevel != "" {
+		// Initialize logging system
 		var err error
-		lvl, err = logrus.ParseLevel(logLevel)
+		lvl, err = capnslog.ParseLevel(strings.ToUpper(logLevel))
 		if err != nil {
-			logrus.Warningf("Wrong Log level %v, defaults to [Warning]", logLevel)
-			lvl = logrus.WarnLevel
+			log.Warningf("Wrong Log level %v, defaults to [Warning]", logLevel)
+			lvl = capnslog.WARNING
 		}
+
 	}
-	logrus.SetLevel(lvl)
+	capnslog.SetGlobalLogLevel(lvl)
+	capnslog.SetFormatter(capnslog.NewPrettyFormatter(os.Stdout, false))
 
 	viper.SetEnvPrefix("clairctl")
 	viper.SetConfigName("clairctl")        // name of config file (without extension)
@@ -70,9 +86,9 @@ func Init(cfgFile string, logLevel string) {
 	}
 	err := viper.ReadInConfig()
 	if err != nil {
-		logrus.Debugf("No config file used")
+		log.Debugf("No config file used")
 	} else {
-		logrus.Debugf("Using config file: %v", viper.ConfigFileUsed())
+		log.Debugf("Using config file: %v", viper.ConfigFileUsed())
 	}
 
 	if viper.Get("clair.uri") == nil {
@@ -99,6 +115,9 @@ func Init(cfgFile string, logLevel string) {
 	}
 	if viper.Get("clairctl.port") == nil {
 		viper.Set("clairctl.port", 0)
+	}
+	if viper.Get("clairctl.interface") == nil {
+		viper.Set("clairctl.interface", "")
 	}
 	if viper.Get("clairctl.tempFolder") == nil {
 		viper.Set("clairctl.tempFolder", "/tmp/clairctl")
@@ -128,6 +147,10 @@ func values() config {
 			IP:         viper.GetString("clairctl.ip"),
 			Port:       viper.GetInt("clairctl.port"),
 			TempFolder: viper.GetString("clairctl.tempFolder"),
+			Interface:  viper.GetString("clairctl.interface"),
+		},
+		Docker: docker{
+			InsecureRegistries: viper.GetStringSlice("docker.insecure-registries"),
 		},
 	}
 }
@@ -136,7 +159,7 @@ func Print() {
 	cfg := values()
 	cfgBytes, err := yaml.Marshal(cfg)
 	if err != nil {
-		logrus.Fatalf("marshalling configuration: %v", err)
+		log.Fatalf("marshalling configuration: %v", err)
 	}
 
 	fmt.Println("Configuration")
@@ -255,69 +278,59 @@ func writeConfigFile(logins loginMapping, file string) error {
 func LocalServerIP() (string, error) {
 	localPort := viper.GetString("clairctl.port")
 	localIP := viper.GetString("clairctl.ip")
+	localInterfaceConfig := viper.GetString("clairctl.interface")
+
 	if localIP == "" {
-		logrus.Infoln("retrieving docker0 interface as local IP")
+		log.Info("retrieving interface for local IP")
 		var err error
-		localIP, err = Docker0InterfaceIP()
+		var localInterface net.Interface
+		localInterface, err = translateInterface(localInterfaceConfig)
 		if err != nil {
-			return "", fmt.Errorf("retrieving docker0 interface ip: %v", err)
+			return "", fmt.Errorf("retrieving interface: %v", err)
+		}
+
+		localIP, err = xnet.IPv4(localInterface)
+		if err != nil {
+			return "", fmt.Errorf("retrieving interface ip: %v", err)
 		}
 	}
 	return strings.TrimSpace(localIP) + ":" + localPort, nil
 }
 
-//Docker0InterfaceIP return the docker0 interface ip by running `ip route show | grep docker0 | awk {print $9}`
-func Docker0InterfaceIP() (string, error) {
-	var localIP bytes.Buffer
+func translateInterface(localInterface string) (net.Interface, error) {
 
-	ip := exec.Command("ip", "route", "show")
-	rGrep, wIP := io.Pipe()
-	grep := exec.Command("grep", "docker0")
-	ip.Stdout = wIP
-	grep.Stdin = rGrep
-	awk := exec.Command("awk", "{print $9}")
-	rAwk, wGrep := io.Pipe()
-	grep.Stdout = wGrep
-	awk.Stdin = rAwk
-	awk.Stdout = &localIP
-	err := ip.Start()
-	if err != nil {
-		return "", err
+	if localInterface != "" {
+		log.Debug("interface provided, looking for " + localInterface)
+		netInterface, err := net.InterfaceByName(localInterface)
+		if err != nil {
+			return net.Interface{}, err
+		}
+		return *netInterface, nil
 	}
-	err = grep.Start()
+
+	log.Debug("no interface provided, looking for docker0")
+	netInterface, err := net.InterfaceByName("docker0")
 	if err != nil {
-		return "", err
+		log.Debug("docker0 not found, looking for first connected broadcast interface")
+		interfaces, err := net.Interfaces()
+		if err != nil {
+			return net.Interface{}, err
+		}
+
+		i, err := xnet.First(xnet.Filter(interfaces, xnet.IsBroadcast), xnet.HasAddr)
+		if err != nil {
+			return net.Interface{}, err
+		}
+		return i, nil
 	}
-	err = awk.Start()
-	if err != nil {
-		return "", err
-	}
-	err = ip.Wait()
-	if err != nil {
-		return "", err
-	}
-	err = wIP.Close()
-	if err != nil {
-		return "", err
-	}
-	err = grep.Wait()
-	if err != nil {
-		return "", err
-	}
-	err = wGrep.Close()
-	if err != nil {
-		return "", err
-	}
-	err = awk.Wait()
-	if err != nil {
-		return "", err
-	}
-	return localIP.String(), nil
+
+	return *netInterface, nil
+
 }
 
 func Clean() error {
-	if IsLocal {
-		logrus.Debugln("cleaning temporary local repository")
+	if IsLocal && !NoClean {
+		log.Debug("cleaning temporary local repository")
 		err := os.RemoveAll(TmpLocal())
 
 		if err != nil {

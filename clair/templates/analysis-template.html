@@ -509,8 +509,8 @@
             <div>
                 <div class="panel">
                     <div class="layers">
-                        <div id="{{.LastLayer.Name}}" class="layer">
-                            <h3 class="layer__title" data-toggle-layer="{{.LastLayer.Name}}">{{.LastLayer.Name}}</h3>
+                        <div id="{{.MostRecentLayer.Layer.Name}}" class="layer">
+                            <h3 class="layer__title" data-toggle-layer="{{.MostRecentLayer.Layer.Name}}">{{.MostRecentLayer.Layer.Name}}</h3>
                             <div class="features">
                                 <ul>
                                     {{ range sortedVulnerabilities $ia}}

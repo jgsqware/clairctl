@@ -5,7 +5,6 @@ import (
 	"os"
 	"text/template"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
@@ -26,7 +25,7 @@ var versionCmd = &cobra.Command{
 		err := templ.Execute(os.Stdout, version)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("rendering the version: %v", err)
+			log.Fatalf("rendering the version: %v", err)
 		}
 	},
 }

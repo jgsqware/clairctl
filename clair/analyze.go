@@ -4,42 +4,49 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
-	"github.com/Sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
-	"github.com/jgsqware/clairctl/config"
-	"github.com/jgsqware/clairctl/xstrings"
+	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
+	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/docker/reference"
 )
 
-//Analyze get Analysis os specified layer
-
 //Analyze return Clair Image analysis
-func Analyze(image reference.Named, manifest schema1.SignedManifest) ImageAnalysis {
-	c := len(manifest.FSLayers)
-	res := []v1.LayerEnvelope{}
-
-	for i := range manifest.FSLayers {
-		blobsum := manifest.FSLayers[c-i-1].BlobSum.String()
-		if config.IsLocal {
-			blobsum = strings.TrimPrefix(blobsum, "sha256:")
-		}
-		lShort := xstrings.Substr(blobsum, 0, 12)
-
-		if a, err := analyzeLayer(blobsum); err != nil {
-			logrus.Infof("analysing layer [%v] %d/%d: %v", lShort, i+1, c, err)
-		} else {
-			logrus.Infof("analysing layer [%v] %d/%d", lShort, i+1, c)
-			res = append(res, a)
-		}
+func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageAnalysis {
+	layers, err := newLayering(image)
+	if err != nil {
+		log.Fatalf("cannot parse manifest")
+		return ImageAnalysis{}
 	}
-	return ImageAnalysis{
-		Registry:  xstrings.TrimPrefixSuffix(image.Hostname(), "http://", "/v2"),
-		ImageName: manifest.Name,
-		Tag:       manifest.Tag,
-		Layers:    res,
+
+	switch manifest.(type) {
+	case schema1.SignedManifest:
+
+		for _, l := range manifest.(schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.analyzeAll()
+	case *schema1.SignedManifest:
+		for _, l := range manifest.(*schema1.SignedManifest).FSLayers {
+			layers.digests = append(layers.digests, l.BlobSum.String())
+		}
+		return layers.analyzeAll()
+	case schema2.DeserializedManifest:
+		log.Debugf("json: %v", image)
+		for _, l := range manifest.(schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
+		}
+		return layers.analyzeAll()
+	case *schema2.DeserializedManifest:
+		log.Debugf("json: %v", image)
+		for _, l := range manifest.(*schema2.DeserializedManifest).Layers {
+			layers.digests = append(layers.digests, l.Digest.String())
+		}
+		return layers.analyzeAll()
+	default:
+		log.Fatalf("Unsupported Schema version.")
+		return ImageAnalysis{}
 	}
 }
 

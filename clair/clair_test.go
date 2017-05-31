@@ -7,13 +7,13 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/coreos/pkg/capnslog"
 )
 
 func getSampleAnalysis() []byte {
 	file, err := ioutil.ReadFile("./samples/clair_report.json")
 	if err != nil {
-		logrus.Errorf("File error: %v\n", err)
+		log.Errorf("File error: %v\n", err)
 	}
 
 	return file

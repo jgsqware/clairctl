@@ -21,14 +21,14 @@ services:
     container_name: "registry"
     environment:
       - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/var/lib/registry
-      - REGISTRY_AUTH=token
-      - REGISTRY_AUTH_TOKEN_REALM=https://auth:5001/auth
-      - REGISTRY_AUTH_TOKEN_SERVICE="registry"
-      - REGISTRY_AUTH_TOKEN_ISSUER="auth_service"
-      - REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE=/ssl/server.pem
+      # - REGISTRY_AUTH=token
+      # - REGISTRY_AUTH_TOKEN_REALM=https://auth:5001/auth
+      # - REGISTRY_AUTH_TOKEN_SERVICE="registry"
+      # - REGISTRY_AUTH_TOKEN_ISSUER="auth_service"
+      # - REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE=/ssl/server.pem
 
   clair:
-    image: quay.io/coreos/clair:v1.2.2
+    image: quay.io/coreos/clair:v1.2.6
     volumes:
       - /tmp:/tmp
       - ./config:/config
@@ -44,9 +44,13 @@ services:
     container_name: "postgres"
     environment:
       - POSTGRES_PASSWORD=root
+    volumes:
+      - db-data:/var/lib/postgresql/data
 
 volumes:
   clair-data:
     driver: local
   registry-data:
+    driver: local
+  db-data:
     driver: local

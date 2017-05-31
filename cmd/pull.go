@@ -5,18 +5,17 @@ import (
 	"html/template"
 	"os"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
-	"github.com/docker/distribution/manifest/schema1"
-	"github.com/docker/docker/reference"
+	"github.com/opencontainers/go-digest"
 	"github.com/spf13/cobra"
 )
 
 const pullTplt = `
-Image: {{.Named.FullName}}
- {{.V1Manifest.FSLayers | len}} layers found
- {{range .V1Manifest.FSLayers}} ➜ {{.BlobSum}}
+Image: {{.Named.FullName}}:{{.Named.Tag}}
+ {{.Layers | len}} layers found
+ {{range .Layers}} ➜ {{.}}
  {{end}}
 `
 
@@ -35,26 +34,32 @@ var pullCmd = &cobra.Command{
 		image, manifest, err := docker.RetrieveManifest(config.ImageName, true)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
+			log.Fatalf("retrieving manifest for %q: %v", config.ImageName, err)
 		}
 
+		layers, err := docker.GetLayerDigests(manifest)
+		if err != nil {
+			fmt.Println(errInternalError)
+			log.Fatalf("retrieving layers for %q: %v", config.ImageName, err)
+		}
 		data := struct {
-			V1Manifest schema1.SignedManifest
-			Named      reference.Named
+			Layers []digest.Digest
+			Named  reference.Named
 		}{
-			V1Manifest: manifest,
-			Named:      image,
+			Layers: layers,
+			Named:  image,
 		}
 
 		err = template.Must(template.New("pull").Parse(pullTplt)).Execute(os.Stdout, data)
 		if err != nil {
 			fmt.Println(errInternalError)
-			logrus.Fatalf("rendering image: %v", err)
+			log.Fatalf("rendering image: %v", err)
 		}
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(pullCmd)
+	pullCmd.Flags().BoolVarP(&config.Insecure, "insecure", "i", false, "use an insecure registry")
 	pullCmd.Flags().BoolVarP(&config.IsLocal, "local", "l", false, "Use local images")
 }

@@ -87,7 +87,7 @@ func (v vulnerabiliesCounts) RelativeCount(severity string) float64 {
 func allVulnerabilities(imageAnalysis ImageAnalysis) vulnerabiliesCounts {
 	result := make(vulnerabiliesCounts)
 
-	l := imageAnalysis.Layers[len(imageAnalysis.Layers)-1]
+	l := imageAnalysis.MostRecentLayer()
 
 	for _, f := range l.Layer.Features {
 
@@ -104,7 +104,7 @@ func vulnerabilities(imageAnalysis ImageAnalysis) map[types.Priority][]vulnerabi
 
 	result := make(map[types.Priority][]vulnerabilityWithFeature)
 
-	l := imageAnalysis.Layers[len(imageAnalysis.Layers)-1]
+	l := imageAnalysis.MostRecentLayer()
 	for _, f := range l.Layer.Features {
 		for _, v := range f.Vulnerabilities {
 
@@ -119,7 +119,7 @@ func vulnerabilities(imageAnalysis ImageAnalysis) map[types.Priority][]vulnerabi
 func sortedVulnerabilities(imageAnalysis ImageAnalysis) []v1.Feature {
 	features := []v1.Feature{}
 
-	l := imageAnalysis.Layers[len(imageAnalysis.Layers)-1]
+	l := imageAnalysis.MostRecentLayer()
 
 	for _, f := range l.Layer.Features {
 		if len(f.Vulnerabilities) > 0 {

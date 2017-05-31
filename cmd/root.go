@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/coreos/pkg/capnslog"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/spf13/cobra"
@@ -12,8 +13,11 @@ import (
 
 var errInternalError = errors.New("client quit unexpectedly")
 
+var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "cmd")
+
 var cfgFile string
 var logLevel string
+var noClean bool
 
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
@@ -39,11 +43,12 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.clairctl.yml)")
+	RootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/clairctl.yml)")
 	RootCmd.PersistentFlags().StringVar(&logLevel, "log-level", "", "log level [Panic,Fatal,Error,Warn,Info,Debug]")
+	RootCmd.PersistentFlags().BoolVar(&noClean, "no-clean", false, "Disable the temporary folder cleaning")
 }
 
 func initConfig() {
-	config.Init(cfgFile, logLevel)
+	config.Init(cfgFile, logLevel, noClean)
 	clair.Config()
 }

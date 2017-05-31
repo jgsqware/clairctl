@@ -1,38 +1,35 @@
 package: github.com/jgsqware/clairctl
 import:
-- package: github.com/Sirupsen/logrus
-  version: ^0.10.0
 - package: github.com/artyom/untar
 - package: github.com/coreos/clair
-  version: ^1.2.5
+  version: ^1.2.6
   subpackages:
   - api/v1
   - utils/types
 - package: github.com/docker/distribution
-  version: fbb70dc3a14ca65cdac3aaf5e5122b03b42f6fbc
+  version: 129ad8ea0c3760d878b34cffdb9c3be874a7b2f7
   subpackages:
-  - digest
   - manifest/schema1
   - registry/client
 - package: github.com/docker/go-connections
-  version: 988efe982fdecb46f01d53465878ff1f2ff411ce
+  version: 4ccf312bf1d35e5dbda654e57a9be4c3f3cd0366
   subpackages:
   - tlsconfig
-- package: github.com/fsouza/go-dockerclient
 - package: github.com/spf13/cobra
 - package: github.com/spf13/viper
 - package: golang.org/x/net
-  version: d4c55e66d8c3a2f3382d264b08e3e3454a66355a
+  version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
   subpackages:
   - context
 - package: gopkg.in/yaml.v2
+  version: f7716cbe52baa25d2e9b0d0da546fcf909fc16b4
 - package: github.com/docker/go-units
   version: ^0.3.1
 - package: github.com/docker/docker
-  version: 62ff3e90835c3c572051afbbbac53303e57a5c89
+  version: 48dd90d3985889ca008faa3b041bf31d2ada95c5
   subpackages:
   - api/types
-  - cliconfig
+  - cli/config
   - distribution
   - reference
   - registry
@@ -40,3 +37,10 @@ import:
   version: 7597b2702729ebb651fc9bb2adac40bcc62db82d
 - package: golang.org/x/crypto
   version: ca7e7f10cb9fd9c1a6ff7f60436c086d73714180
+- package: github.com/opencontainers/go-digest
+  version: 21dfd564fd89c944783d00d069f33e3e7123c448
+- package: github.com/coreos/pkg
+  version: 2c77715c4df99b5420ffcae14ead08f52104065d
+  subpackages:
+  - capnslog
+  - timeutil

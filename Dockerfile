@@ -3,10 +3,9 @@ FROM alpine:3.5
 ENV GOPATH=/go
 ENV PATH=${GOPATH}/bin:${PATH}
 ENV DOCKER_API_VERSION=1.24
-ARG DOCKER_VERSION=17.05.0-ce
-ARG CLAIRCTL_VERSION=${DOCKER_TAG:-master}
-
-WORKDIR /root
+ARG DOCKER_VERSION=${DOCKER_VERSION:-latest}
+ARG CLAIRCTL_VERSION=${CLAIRCTL_VERSION:-master}
+ARG CLAIRCTL_COMMIT=
 
 RUN apk add --update curl \
  && apk add --virtual build-dependencies go gcc build-base glide git \
@@ -23,7 +22,7 @@ RUN apk add --update curl \
  && cd ${GOPATH}/src/github.com/jgsqware/clairctl \
  && glide install -v \
  && go generate ./clair \
- && go build -o /usr/local/bin/clairctl -ldflags "-X github.com/jgsqware/clairctl/cmd.version=${CLAIRCTL_VERSION}" \
+ && go build -o /usr/local/bin/clairctl -ldflags "-X github.com/jgsqware/clairctl/cmd.version=${CLAIRCTL_VERSION}-${CLAIRCTL_COMMIT}" \
  && apk del build-dependencies \
  && rm -rf /var/cache/apk/* \
  && rm -rf /root/.glide/ \

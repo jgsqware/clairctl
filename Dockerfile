@@ -2,18 +2,15 @@ FROM alpine:3.5
 
 ENV GOPATH=/go
 ENV PATH=${GOPATH}/bin:${PATH}
-ENV DOCKER_VERSION=17.05.0-ce
 ENV DOCKER_API_VERSION=1.24
-ENV CLAIRCTL_VERSION=${DOCKER_TAG:-master}
-ARG CLAIRCTL_COMMIT=master
+ARG DOCKER_VERSION=17.05.0-ce
+ARG CLAIRCTL_VERSION=${DOCKER_TAG:-master}
 
 WORKDIR /root
 
 RUN apk add --update curl \
  && apk add --virtual build-dependencies go gcc build-base glide git \
  && adduser clairctl -D \
- && addgroup docker -S -g 50 \
- && adduser clairctl docker \
  && curl https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz -o docker.tgz \
  && tar xfvz docker.tgz --strip 1 -C /usr/bin/ docker/docker \
  && rm -f docker.tgz \
@@ -22,7 +19,7 @@ RUN apk add --update curl \
  && mkdir -p ${GOPATH}/src/github.com/jgsqware/ \
  && unzip clairctl.zip -d ${GOPATH}/src/github.com/jgsqware/ \
  && rm -f clairctl.zip \
- && mv ${GOPATH}/src/github.com/jgsqware/clairctl-${CLAIRCTL_COMMIT}* ${GOPATH}/src/github.com/jgsqware/clairctl \
+ && mv ${GOPATH}/src/github.com/jgsqware/clairctl-* ${GOPATH}/src/github.com/jgsqware/clairctl \
  && cd ${GOPATH}/src/github.com/jgsqware/clairctl \
  && glide install -v \
  && go generate ./clair \
@@ -39,15 +36,16 @@ RUN apk add --update curl \
   report:\n\
     path: /reports\n\
     format: html\n\
-  clairctl:\n\
-    port: 44480\n\
-    tempfolder: /tmp'\
+clairctl:\n\
+  port: 44480\n\
+  tempfolder: /tmp'\
     > /home/clairctl/clairctl.yml
 
-EXPOSE 44480
-
 USER clairctl
+
 WORKDIR /home/clairctl/
+
+EXPOSE 44480
 
 VOLUME ["/tmp/", "/reports/"]
  

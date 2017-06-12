@@ -13,6 +13,7 @@ import (
 var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "clair")
 
 var uri string
+var host string
 var healthURI string
 
 //ImageAnalysis Full image analysis
@@ -57,6 +58,7 @@ func (imageAnalysis ImageAnalysis) ShortName(l v1.Layer) string {
 //Config configure Clair from configFile
 func Config() {
 	uri = fmtURI(viper.GetString("clair.uri"), viper.GetInt("clair.port")) + "/v1"
+	host = viper.GetString("clair.host")
 	healthURI = fmtURI(viper.GetString("clair.uri"), viper.GetInt("clair.healthPort")) + "/health"
 	Report.Path = viper.GetString("clair.report.path")
 	Report.Format = viper.GetString("clair.report.format")

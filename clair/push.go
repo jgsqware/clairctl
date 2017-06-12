@@ -73,6 +73,7 @@ func pushLayer(layer v1.LayerEnvelope) error {
 		return fmt.Errorf("creating 'add layer' request: %v", err)
 	}
 	request.Header.Set("Content-Type", "application/json")
+	request.Host = host
 
 	response, err := (&http.Client{}).Do(request)
 

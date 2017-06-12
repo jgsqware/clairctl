@@ -53,7 +53,13 @@ func Analyze(image reference.NamedTagged, manifest distribution.Manifest) ImageA
 func analyzeLayer(id string) (v1.LayerEnvelope, error) {
 
 	lURI := fmt.Sprintf("%v/layers/%v?vulnerabilities", uri, id)
-	response, err := http.Get(lURI)
+	request, err := http.NewRequest("GET", lURI, nil)
+	if err != nil {
+		return v1.LayerEnvelope{}, err
+	}
+	request.Host = host
+	response, err := (&http.Client{}).Do(request)
+
 	if err != nil {
 		return v1.LayerEnvelope{}, fmt.Errorf("analysing layer %v: %v", id, err)
 	}

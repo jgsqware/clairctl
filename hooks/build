@@ -1,0 +1,18 @@
+#!/usr/bin/env sh
+export DOCKER_VERSION=17.05.0-ce
+export GIT_REV_PARSE=$(git rev-parse --short HEAD)
+
+echo "=-=-=-=-=-=-=- DEBUG INFO =-=-=-=-=-=-=-"
+echo "SOURCE_BRANCH: ${SOURCE_BRANCH}"
+echo "SOURCE_COMMIT: ${SOURCE_COMMIT}"
+echo "COMMIT_MSG: ${COMMIT_MSG}"
+echo "DOCKER_REPO: ${DOCKER_REPO}"
+echo "DOCKER_TAG: ${DOCKER_TAG}"
+echo "IMAGE_NAME: ${IMAGE_NAME}"
+echo "GIT_REV_PARSE: ${GIT_REV_PARSE}"
+echo "=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-"
+
+docker build --build-arg CLAIRCTL_VERSION=${DOCKER_TAG} \
+             --build-arg CLAIRCTL_COMMIT=${GIT_REV_PARSE} \
+             --build-arg DOCKER_VERSION=${DOCKER_VERSION} \
+             -t $IMAGE_NAME .

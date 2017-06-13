@@ -10,6 +10,8 @@ ARG CLAIRCTL_COMMIT=
 RUN apk add --update curl \
  && apk add --virtual build-dependencies go gcc build-base glide git \
  && adduser clairctl -D \
+ && mkdir -p /reports \
+ && chown -R clairctl:clairctl /reports /tmp \
  && curl https://get.docker.com/builds/Linux/x86_64/docker-${DOCKER_VERSION}.tgz -o docker.tgz \
  && tar xfvz docker.tgz --strip 1 -C /usr/bin/ docker/docker \
  && rm -f docker.tgz \

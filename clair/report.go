@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"math"
 	"text/template"
+	"strings"
 
 	"github.com/coreos/clair/api/v1"
 	"github.com/coreos/clair/utils/types"
+	"github.com/spf13/viper"
+	"os"
 )
 
 //execute go generate ./clair
@@ -138,4 +141,25 @@ func sortedVulnerabilities(imageAnalysis ImageAnalysis) []v1.Feature {
 	}
 
 	return features
+}
+
+func SaveReport(name string, content string) error {
+	path := viper.GetString("clair.report.path") + "/" + Report.Format
+	if err := os.MkdirAll(path, 0777); err != nil {
+		return err
+	}
+
+	reportsName := fmt.Sprintf("%v/analysis-%v.%v", path, name, strings.ToLower(Report.Format))
+	f, err := os.Create(reportsName)
+	if err != nil {
+		return fmt.Errorf("creating report file: %v", err)
+	}
+
+	_, err = f.WriteString(content)
+
+	if err != nil {
+		return fmt.Errorf("writing report file: %v", err)
+	}
+	fmt.Printf("%v report at %v\n", strings.ToUpper(Report.Format), reportsName)
+	return nil
 }

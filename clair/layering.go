@@ -8,6 +8,7 @@ import (
 	"github.com/coreos/clair/api/v1"
 	"github.com/docker/docker/reference"
 	"github.com/jgsqware/clairctl/config"
+	"github.com/jgsqware/clairctl/docker/dockerdist"
 	"github.com/jgsqware/clairctl/xstrings"
 )
 
@@ -49,20 +50,21 @@ func (layers *layering) pushAll() error {
 
 		lUID := xstrings.Substr(digest, 0, 12)
 		log.Infof("Pushing Layer %d/%d [%v]", index+1, layerCount, lUID)
-
 		insertRegistryMapping(digest, layers.image.Hostname())
+		u, _ := dockerdist.GetPushURL(layers.image.Hostname())
 		payload := v1.LayerEnvelope{Layer: &v1.Layer{
 			Name:       digest,
-			Path:       blobsURI(layers.image.Hostname(), layers.image.RemoteName(), digest),
+			Path:       blobsURI(u.String(), layers.image.RemoteName(), digest),
 			ParentName: layers.parentID,
 			Format:     "Docker",
 		}}
 
 		//FIXME Update to TLS
 		if config.IsLocal {
+			payload.Layer.Path = strings.Replace(payload.Layer.Path, u.String(), layers.hURL, 1)
 			payload.Layer.Path += "/layer.tar"
 		}
-		payload.Layer.Path = strings.Replace(payload.Layer.Path, layers.image.Hostname(), layers.hURL, 1)
+
 		if err := pushLayer(payload); err != nil {
 			log.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
 			if err != ErrUnanalizedLayer {

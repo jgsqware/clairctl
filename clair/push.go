@@ -2,10 +2,12 @@ package clair
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/coreos/clair/api/v1"
@@ -13,7 +15,9 @@ import (
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
 	"github.com/docker/docker/reference"
+	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker/dockerdist"
+	"github.com/spf13/viper"
 )
 
 // ErrUnanalizedLayer is returned when the layer was not correctly analyzed
@@ -49,11 +53,15 @@ func Push(image reference.NamedTagged, manifest distribution.Manifest) error {
 		}
 		return layers.pushAll()
 	default:
-		return errors.New("Unsupported Schema version.")
+		return errors.New("unsupported Schema version")
 	}
 }
 
 func pushLayer(layer v1.LayerEnvelope) error {
+	if !config.IsLocal {
+		layer = auth(layer)
+	}
+
 	lJSON, err := json.Marshal(layer)
 	if err != nil {
 		return fmt.Errorf("marshalling layer: %v", err)
@@ -81,6 +89,33 @@ func pushLayer(layer v1.LayerEnvelope) error {
 	}
 
 	return nil
+}
+
+func auth(layer v1.LayerEnvelope) v1.LayerEnvelope {
+
+	out, _ := url.Parse(layer.Layer.Path)
+	client := &http.Client{Transport: &http.Transport{
+		TLSClientConfig:    &tls.Config{InsecureSkipVerify: viper.GetBool("auth.insecureSkipVerify")},
+		DisableCompression: true,
+	}}
+
+	log.Debugf("auth.insecureSkipVerify: %v", viper.GetBool("auth.insecureSkipVerify"))
+	log.Debugf("request.URL.String(): %v", out)
+	req, _ := http.NewRequest("HEAD", out.String(), nil)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("response error: %v", err)
+		return v1.LayerEnvelope{}
+	}
+
+	if resp.StatusCode == http.StatusUnauthorized {
+		log.Info("pull from clair is unauthorized")
+		dockerdist.AuthenticateResponse(client, resp, req)
+	}
+	layer.Layer.Headers = make(map[string]string)
+	layer.Layer.Headers["Authorization"] = req.Header.Get("Authorization")
+	return layer
 }
 
 func blobsURI(registry string, name string, digest string) string {

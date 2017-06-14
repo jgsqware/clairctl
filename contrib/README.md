@@ -1,7 +1,7 @@
 CONTRIBUTION
 -----------------
 
-# Running full dev environnement
+# Running a development environnement
 
 ```bash
 # Running Authentication server, Registry, Clair

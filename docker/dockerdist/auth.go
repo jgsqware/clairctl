@@ -50,6 +50,10 @@ func AuthenticateResponse(client *http.Client, dockerResponse *http.Response, re
 		return err
 	}
 
+	if bearerToken == nil {
+		request.SetBasicAuth(authConfig.Username, authConfig.Password)
+		return nil
+	}
 	req.SetBasicAuth(authConfig.Username, authConfig.Password)
 
 	response, err := client.Do(req)

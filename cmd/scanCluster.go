@@ -14,7 +14,6 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/pkg/api/v1"
-	"github.com/spf13/viper"
 )
 
 var scanCmd = &cobra.Command{
@@ -36,7 +35,6 @@ var scanCmd = &cobra.Command{
 		if err != nil {
 			panic(err.Error())
 		}
-		fmt.Printf("There are %d pods in the cluster\n", len(pods.Items))
 
 		images := make(map[string]struct{})
 
@@ -45,8 +43,6 @@ var scanCmd = &cobra.Command{
 				images[container.Image] = struct{}{}
 			}
 		}
-
-		fmt.Printf("list of images %v", images)
 
 		for imageName := range (images) {
 			config.ImageName = imageName
@@ -111,6 +107,4 @@ var scanCmd = &cobra.Command{
 
 func init() {
 	RootCmd.AddCommand(scanCmd)
-	reportCmd.Flags().StringP("format", "f", "html", "Format for Report [html,json]")
-	viper.BindPFlag("clair.report.format", reportCmd.Flags().Lookup("format"))
 }

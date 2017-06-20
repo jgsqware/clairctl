@@ -39,11 +39,6 @@ func AuthenticateResponse(client *http.Client, dockerResponse *http.Response, re
 	if bearerToken["scope"] != "" {
 		url += "&scope=" + bearerToken["scope"]
 	}
-	req, err := http.NewRequest("GET", url, nil)
-
-	if err != nil {
-		return err
-	}
 
 	authConfig, err := GetAuthCredentials(config.ImageName)
 	if err != nil {
@@ -54,6 +49,12 @@ func AuthenticateResponse(client *http.Client, dockerResponse *http.Response, re
 		request.SetBasicAuth(authConfig.Username, authConfig.Password)
 		return nil
 	}
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
 	req.SetBasicAuth(authConfig.Username, authConfig.Password)
 
 	response, err := client.Do(req)

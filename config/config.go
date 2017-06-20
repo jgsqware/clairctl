@@ -30,6 +30,7 @@ var Insecure = false
 var NoClean = false
 
 var ImageName string
+var ClusterImages  map[string]struct{}
 
 type reportConfig struct {
 	Path, Format string

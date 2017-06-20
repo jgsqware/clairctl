@@ -122,6 +122,9 @@ func Init(cfgFile string, logLevel string, noClean bool) {
 	if viper.Get("clairctl.tempFolder") == nil {
 		viper.Set("clairctl.tempFolder", "/tmp/clairctl")
 	}
+	if viper.Get("notifier.severity") == nil {
+		viper.Set("notifier.severity", "Critical")
+	}
 
 }
 

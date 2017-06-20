@@ -34,7 +34,7 @@ func ReportAsHTML(analyzes ImageAnalysis) (string, error) {
 
 	funcs := template.FuncMap{
 		"vulnerabilities":       vulnerabilities,
-		"allVulnerabilities":    allVulnerabilities,
+		"allVulnerabilities":    AllVulnerabilities,
 		"sortedVulnerabilities": sortedVulnerabilities,
 	}
 
@@ -87,7 +87,7 @@ func (v vulnerabiliesCounts) RelativeCount(severity string) float64 {
 }
 
 // allVulnerabilities Total count of vulnerabilities
-func allVulnerabilities(imageAnalysis ImageAnalysis) vulnerabiliesCounts {
+func AllVulnerabilities(imageAnalysis ImageAnalysis) vulnerabiliesCounts {
 	result := make(vulnerabiliesCounts)
 
 	l := imageAnalysis.MostRecentLayer()

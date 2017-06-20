@@ -14,6 +14,9 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/pkg/api/v1"
+	"github.com/spf13/viper"
+	"bytes"
+	"net/http"
 )
 
 var scanCmd = &cobra.Command{
@@ -66,7 +69,6 @@ var scanCmd = &cobra.Command{
 				log.Fatalf("rendering analysis: %v", err)
 			}
 
-			analyzes := clair.Analyze(image, manifest)
 			imageName := strings.Replace(analyzes.ImageName, "/", "-", -1)
 			if analyzes.Tag != "" {
 				imageName += "-" + analyzes.Tag
@@ -101,10 +103,73 @@ var scanCmd = &cobra.Command{
 				fmt.Printf("Unsupported Report format: %v", clair.Report.Format)
 				log.Fatalf("Unsupported Report format: %v", clair.Report.Format)
 			}
+
+			if viper.GetString("notifier.endpoint") != "" {
+				checkAndNotify(analyzes)
+			}
+
 		}
 	},
 }
 
 func init() {
 	RootCmd.AddCommand(scanCmd)
+}
+
+func checkAndNotify(analyzes clair.ImageAnalysis) {
+	vulnerabilities := clair.AllVulnerabilities(analyzes)
+
+	endpoint := viper.GetString("notifier.endpoint")
+	severity := viper.GetString("notifier.severity")
+
+	if vulnerabilities.Count("Critical") != 0 {
+		postNotification(severity, analyzes, endpoint)
+	}
+
+	if severity == "Critical" {
+		return
+	}
+
+	if vulnerabilities.Count("High") != 0 {
+		postNotification("High", analyzes, endpoint)
+	}
+
+	if severity == "High" {
+		return
+	}
+
+	if vulnerabilities.Count("Medium") != 0 {
+		postNotification("Medium", analyzes, endpoint)
+	}
+
+	if severity == "Medium" {
+		return
+	}
+	if vulnerabilities.Count("Low") != 0 {
+		postNotification("Low", analyzes, endpoint)
+	}
+
+	if severity == "Low" {
+		return
+	}
+	if vulnerabilities.Count("Negligible") != 0 {
+		postNotification("Negligible", analyzes, endpoint)
+	}
+}
+
+func postNotification(severity string, analyzes clair.ImageAnalysis, endpoint string) {
+	var jsonStr = []byte(fmt.Sprintf(`{"text":"There are some %s vulnerabilites in the image %s"}`,
+		severity, analyzes.ImageName))
+	req, err := http.NewRequest("POST", endpoint, bytes.NewBuffer(jsonStr))
+	if err != nil {
+		log.Infof("Err posting notification' request: %v", err)
+	}
+	response, err := (&http.Client{}).Do(req)
+	if err != nil {
+		log.Infof("Err posting notification: %v", err)
+	}
+	defer response.Body.Close()
+	if response.StatusCode != 200 {
+		log.Infof("Err posting notification: returned %v statusCode", response.StatusCode)
+	}
 }

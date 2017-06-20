@@ -50,7 +50,7 @@ func TestRelativeCount(t *testing.T) {
 		t.Errorf("Failing with error: %v", err)
 	}
 
-	vulnerabilitiesCount := allVulnerabilities(analysis)
+	vulnerabilitiesCount := AllVulnerabilities(analysis)
 	if vulnerabilitiesCount.RelativeCount("High") != 1.3 {
 		t.Errorf("analysis.CountAllVulnerabilities().RelativeCount(\"High\") => %v, want 1.3", vulnerabilitiesCount.RelativeCount("High"))
 	}

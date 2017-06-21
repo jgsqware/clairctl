@@ -86,6 +86,10 @@ func Init(cfgFile string, logLevel string, noClean bool) {
 	}
 	err := viper.ReadInConfig()
 	if err != nil {
+		e, ok := err.(viper.ConfigParseError)
+		if ok {
+			log.Fatalf("error parsing config file: %v", e)
+		}
 		log.Debugf("No config file used")
 	} else {
 		log.Debugf("Using config file: %v", viper.ConfigFileUsed())

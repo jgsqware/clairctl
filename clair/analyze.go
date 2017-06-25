@@ -57,7 +57,8 @@ func analyzeLayer(id string) (v1.LayerEnvelope, error) {
 	if err != nil {
 		return v1.LayerEnvelope{}, err
 	}
-	request.Host = host
+	SetRequestHeaders(request)
+
 	response, err := (&http.Client{}).Do(request)
 
 	if err != nil {

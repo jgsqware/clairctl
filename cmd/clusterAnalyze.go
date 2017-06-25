@@ -18,7 +18,6 @@ var analyzeClusterCmd = &cobra.Command{
 	Long:  `Analyze Docker images with Clair, against Ubuntu, Red hat and Debian vulnerabilities databases`,
 	Run: func(cmd *cobra.Command, args []string) {
 		images := config.ClusterImages
-		log.Debugf("HERE %v", images)
 		for imageName := range images {
 			config.ImageName = imageName
 			image, manifest, err := docker.RetrieveManifest(imageName, true)

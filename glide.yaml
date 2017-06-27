@@ -44,3 +44,5 @@ import:
   subpackages:
   - capnslog
   - timeutil
+- package: github.com/fatih/color
+  version: ^1.5.0

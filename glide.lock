@@ -1,5 +1,5 @@
-hash: b93acdfc967a284ed094d4c1c7e40ef6e5e2df6c51dbcffa3eabf9f3fe142ab8
-updated: 2017-02-27T14:55:57.838212231+01:00
+hash: 93844a64dc51db6338d9ea0215e614e4f7ef8e2ca845534c6e81064696ed2b42
+updated: 2017-06-27T17:57:43.60340145+02:00
 imports:
 - name: github.com/artyom/untar
   version: 02ed5a2449a661eb02b1e3d658524223ab726412
@@ -123,6 +123,8 @@ imports:
   version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
 - name: github.com/docker/libtrust
   version: fa567046d9b14f6aa788882a950d69651d230b21
+- name: github.com/fatih/color
+  version: 570b54cabe6b8eb0bc2dfce68d964677d63b5260
 - name: github.com/fernet/fernet-go
   version: 1b2437bc582b3cfbb341ee5a29f8ef5b42912ff2
 - name: github.com/fsnotify/fsnotify
@@ -156,6 +158,10 @@ imports:
   version: 2788f0dbd16903de03cb8186e5c7d97b69ad387b
 - name: github.com/magiconair/properties
   version: 0723e352fa358f9322c938cc2dadda874e9151a9
+- name: github.com/mattn/go-colorable
+  version: 941b50ebc6efddf4c41c8e4537a5f68a4e686b24
+- name: github.com/mattn/go-isatty
+  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
 - name: github.com/mattn/go-shellwords
   version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/matttproud/golang_protobuf_extensions
@@ -206,7 +212,7 @@ imports:
 - name: github.com/prometheus/procfs
   version: 406e5b7bfd8201a36e2bb5f7bdae0b03380c2ce8
 - name: github.com/Sirupsen/logrus
-  version: c078b1e43f58d563c74cebe63c85789e76ddb627
+  version: d26492970760ca5d33129d2d799e34be5c4782eb
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:

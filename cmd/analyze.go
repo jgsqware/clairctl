@@ -9,6 +9,7 @@ import (
 
 	"github.com/coreos/clair/api/v1"
 	"github.com/coreos/clair/utils/types"
+	"github.com/fatih/color"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
@@ -18,7 +19,7 @@ import (
 const analyzeTplt = `
 Image: {{.String}}
  {{range $v := vulns .MostRecentLayer}}
- {{$v.Priority}}: {{$v.Count}}{{end}}
+ {{$v | colorized}}{{end}}
 `
 
 var filters string
@@ -58,7 +59,8 @@ var analyzeCmd = &cobra.Command{
 		log.Debug("Using priority filters: ", filters)
 
 		funcMap := template.FuncMap{
-			"vulns": CountVulnerabilities,
+			"vulns":     CountVulnerabilities,
+			"colorized": colorized,
 		}
 		err = template.Must(template.New("analysis").Funcs(funcMap).Parse(analyzeTplt)).Execute(os.Stdout, analysis)
 		if err != nil {
@@ -75,6 +77,28 @@ var analyzeCmd = &cobra.Command{
 type PriorityCount struct {
 	Priority types.Priority
 	Count    int
+}
+
+func colorized(p PriorityCount) string {
+	switch p.Priority {
+
+	case types.Unknown:
+		return color.WhiteString("%v: %v", p.Priority, p.Count)
+	case types.Negligible:
+		return color.HiWhiteString("%v: %v", p.Priority, p.Count)
+	case types.Low:
+		return color.YellowString("%v: %v", p.Priority, p.Count)
+	case types.Medium:
+		return color.HiYellowString("%v: %v", p.Priority, p.Count)
+	case types.High:
+		return color.MagentaString("%v: %v", p.Priority, p.Count)
+	case types.Critical:
+		return color.RedString("%v: %v", p.Priority, p.Count)
+	case types.Defcon1:
+		return color.HiRedString("%v: %v", p.Priority, p.Count)
+	default:
+		return color.WhiteString("%v: %v", p.Priority, p.Count)
+	}
 }
 
 func isValid(l v1.LayerEnvelope) bool {

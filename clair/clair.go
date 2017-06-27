@@ -30,14 +30,6 @@ func (imageAnalysis ImageAnalysis) MostRecentLayer() v1.LayerEnvelope {
 	return imageAnalysis.Layers[0]
 }
 
-func (imageAnalysis ImageAnalysis) CountVulnerabilities(l v1.Layer) int {
-	count := 0
-	for _, feature := range l.Features {
-		count += len(feature.Vulnerabilities)
-	}
-	return count
-}
-
 func fmtURI(u string, port int) string {
 
 	if port != 0 {

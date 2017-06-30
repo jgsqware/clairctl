@@ -1,8 +1,10 @@
 clair:
   port: 6060
   healthPort: 6061
-  headers:
-    - "host=clair-eu"
+  request:
+    host: HOST
+    headers:
+       myHeader: header
   uri: http://clair
   report:
     path: ./reports

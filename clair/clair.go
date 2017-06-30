@@ -14,7 +14,8 @@ import (
 var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "clair")
 
 var uri string
-var headers = make(map[string]string)
+var headers map[string]string
+var host string
 var healthURI string
 
 //ImageAnalysis Full image analysis
@@ -62,20 +63,13 @@ func Config() {
 	healthURI = fmtURI(viper.GetString("clair.uri"), viper.GetInt("clair.healthPort")) + "/health"
 	Report.Path = viper.GetString("clair.report.path")
 	Report.Format = viper.GetString("clair.report.format")
-
-	headersArray := viper.GetStringSlice("clair.headers")
-	for _, header := range(headersArray){
-		splitHeader := strings.Split(header, "=")
-		headers[splitHeader[0]] = splitHeader[1]
-	}
+	headers = viper.GetStringMapString("clair.request.headers")
+	host = viper.GetString("clair.request.host")
 }
 
 func SetRequestHeaders(request *http.Request) {
+	request.Host = host
 	for name, value := range headers {
-		if strings.EqualFold(name, "host") {
-			request.Host = value
-		} else {
-			request.Header.Add(name, value)
-		}
+		request.Header.Add(name, value)
 	}
 }

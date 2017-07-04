@@ -1,0 +1,33 @@
+version: '2'
+
+services:
+  postgres:
+    image: postgres:9.6
+    restart: unless-stopped
+    volumes:
+      - ./docker-compose-data/postgres-data/:/var/lib/postgresql/data:rw
+    environment:
+      - POSTGRES_PASSWORD=ChangeMe
+      - POSTGRES_USER=clair
+      - POSTGRES_DB=clair
+    
+  clair:
+    image: quay.io/coreos/clair:v2.0.0
+    restart: unless-stopped
+    volumes:
+      - ./docker-compose-data/clair-config/:/config/:ro
+      - ./docker-compose-data/clair-tmp/:/tmp/:rw
+    ports:
+      - '6060-6061:6060-6061'
+    command: [--log-level=debug, --config, /config/config.yml]
+    
+  clairctl:
+    image: jgsqware/clairctl:latest
+    restart: unless-stopped
+    environment: 
+      - DOCKER_API_VERSION=1.24
+    volumes:
+      - ./docker-compose-data/clairctl-reports/:/reports/:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    ports:
+      - '44480:44480'

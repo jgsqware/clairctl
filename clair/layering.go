@@ -61,7 +61,8 @@ func (layers *layering) pushAll() error {
 
 		//FIXME Update to TLS
 		if config.IsLocal {
-			payload.Layer.Path = strings.Replace(payload.Layer.Path, u.String(), layers.hURL, 1)
+			local := layers.hURL + "/" + layers.image.Hostname()
+			payload.Layer.Path = strings.Replace(payload.Layer.Path, u.String(), local, 1)
 			payload.Layer.Path += "/layer.tar"
 		}
 

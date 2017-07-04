@@ -114,6 +114,7 @@ func save(imageName string) (distribution.Manifest, error) {
 	}()
 
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
@@ -123,11 +124,13 @@ func save(imageName string) (distribution.Manifest, error) {
 
 	err = openAndUntar(path+"/output.tar", path)
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 
 	err = os.Remove(path + "/output.tar")
 	if err != nil {
+		log.Error(err)
 		return nil, err
 	}
 	return historyFromManifest(path)

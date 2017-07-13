@@ -36,8 +36,8 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
-	"github.com/spf13/viper"
 	"golang.org/x/net/context"
+	"github.com/spf13/viper"
 )
 
 var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockerdist")

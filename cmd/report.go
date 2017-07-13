@@ -44,7 +44,7 @@ var reportCmd = &cobra.Command{
 				fmt.Println(errInternalError)
 				log.Fatalf("generating HTML report: %v", err)
 			}
-			err = saveReport(imageName, string(html))
+			err = clair.SaveReport(imageName, string(html))
 			if err != nil {
 				fmt.Println(errInternalError)
 				log.Fatalf("saving HTML report: %v", err)
@@ -57,7 +57,7 @@ var reportCmd = &cobra.Command{
 				fmt.Println(errInternalError)
 				log.Fatalf("indenting JSON: %v", err)
 			}
-			err = saveReport(imageName, string(json))
+			err = clair.SaveReport(imageName, string(json))
 			if err != nil {
 				fmt.Println(errInternalError)
 				log.Fatalf("saving JSON report: %v", err)
@@ -68,27 +68,6 @@ var reportCmd = &cobra.Command{
 			log.Fatalf("Unsupported Report format: %v", clair.Report.Format)
 		}
 	},
-}
-
-func saveReport(name string, content string) error {
-	path := viper.GetString("clair.report.path") + "/" + clair.Report.Format
-	if err := os.MkdirAll(path, 0777); err != nil {
-		return err
-	}
-
-	reportsName := fmt.Sprintf("%v/analysis-%v.%v", path, name, strings.ToLower(clair.Report.Format))
-	f, err := os.Create(reportsName)
-	if err != nil {
-		return fmt.Errorf("creating report file: %v", err)
-	}
-
-	_, err = f.WriteString(content)
-
-	if err != nil {
-		return fmt.Errorf("writing report file: %v", err)
-	}
-	fmt.Printf("%v report at %v\n", strings.ToUpper(clair.Report.Format), reportsName)
-	return nil
 }
 
 func init() {

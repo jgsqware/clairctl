@@ -47,6 +47,7 @@ func deleteLayer(id string) error {
 
 	lURI := fmt.Sprintf("%v/layers/%v", uri, id)
 	request, err := http.NewRequest("DELETE", lURI, nil)
+	SetRequestHeaders(request)
 
 	if err != nil {
 		return fmt.Errorf("creating 'delete layer' request: %v", err)

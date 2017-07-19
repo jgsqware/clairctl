@@ -1,4 +1,4 @@
-version: '2'
+version: '2.1'
 
 services:
   postgres:
@@ -17,8 +17,9 @@ services:
     volumes:
       - ./docker-compose-data/clair-config/:/config/:ro
       - ./docker-compose-data/clair-tmp/:/tmp/:rw
-    ports:
-      - '6060-6061:6060-6061'
+    depends_on: 
+      postgres:
+        condition: service_started
     command: [--log-level=debug, --config, /config/config.yml]
     
   clairctl:
@@ -29,5 +30,6 @@ services:
     volumes:
       - ./docker-compose-data/clairctl-reports/:/reports/:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    ports:
-      - '44480:44480'
+    depends_on: 
+      clair: 
+        condition: service_started

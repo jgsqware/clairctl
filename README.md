@@ -11,13 +11,52 @@ Clairctl version is align with the [CoreOS Clair](https://github.com/coreos/clai
 
 # Installation
 
-  ## Released version:
-  Go to [Release](https://github.com/jgsqware/clairctl/releases) and download your corresponding version
+## Released version:
 
-  ## Master branch version
+Go to [Release](https://github.com/jgsqware/clairctl/releases) and download your corresponding version
 
-    curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | sh
-    
+## Master branch version
+
+```bash
+curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | sh
+``` 
+
+# Docker-compose
+
+```bash
+$ git clone git@github.com:jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
+$ cd $GOPATH/src/github.com/jgsqware/clairctl
+$ docker-compose up -d postgres
+Creating network "clairctl_default" with the default driver
+Creating clairctl_postgres_1 ...
+Creating clairctl_clair_1 ...
+Creating clairctl_clairctl_1 ...
+```
+
+The above commands will check out the `clairctl` repo and start the complete postgres/clair/clairctl stack.
+
+```bash
+$ docker-compose exec clairctl clairctl health
+
+Clair: ✔
+```
+
+The above command will make sure clairctl can reach clair.
+
+If you wish to serve local images to clair, the user inside the clairctl container will need read access to `/var/run/docker.sock`.
+
+Give the user access by:
+  - Running the container as root (`--user root` with `docker run` or `user: root` with `docker-compose`)
+  - Add the container user to the docker group (`----group-add group_id` with `docker run` or `group_add: group_id` with `docker-compose`)
+
+To get the group name or id, simply execute :
+
+```bash
+$ docker-compose exec clairctl ls -alh /var/run/docker.sock
+srw-rw----    1 root     50             0 Jul 18 09:48 /var/run/docker.sock
+```
+
+In the example above, 50 is the required group.
 
 # Usage
 
@@ -29,7 +68,7 @@ Clairctl version is align with the [CoreOS Clair](https://github.com/coreos/clai
 
 clairctl can be used for Docker Hub and self-hosted Registry
 
-# Command
+# Commands
 
 ```
 Analyze your docker image with Clair, directly from your registry.
@@ -40,9 +79,7 @@ Usage:
 Available Commands:
   analyze     Analyze Docker image
   health      Get Health of clairctl and underlying services
-  login       Log in to a Docker registry
-  logout      Log out from a Docker registry
-  pull        Pull Docker image information
+  pull        Pull Docker image information (This will not pull the image !)
   push        Push Docker image to Clair
   report      Generate Docker Image vulnerabilities report
   version     Get Versions of clairctl and underlying services
@@ -85,6 +122,23 @@ go build
 ```
 
 This will result in a `clairctl` executable in the `$GOPATH/src/github.com/jgsqware/clairctl` folder.
+
+# FAQ
+
+## I get 400 errors !
+
+If you get 400 errors, check out clair's logs. The usual reasons are :
+  
+  - You are serving a local image, and clair cannot connect to clairctl.
+  - You are trying to analyze an official image from docker hub and you have not done a docker login first.
+  
+Please try these two things before opening an Issue.
+
+## I get access denied on /var/run/docker.sock
+
+If you are running the stack with the provided `docker-compose.yml`, don't forget to grant the user from the clairctl container access to `/var/run/docker.sock`. 
+
+All steps are detailed in the Docker-compose section above.
 
 # Contribution and Test
 

@@ -2,6 +2,7 @@ package server
 
 import (
 	"crypto/tls"
+	"encoding/json"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -37,6 +38,34 @@ func Serve(sURL string) error {
 	//sleep needed to wait the server start. Maybe use a channel for that
 	time.Sleep(5 * time.Millisecond)
 	return nil
+}
+
+//ServeOK run a local server with the fileserver and the reverse proxy
+func ServeOK(sURL string) error {
+	var err error
+	viper.Debug()
+	http.HandleFunc("/",
+		func(w http.ResponseWriter, r *http.Request) {
+
+			okStatus := struct {
+				Status string `json:"status"`
+			}{"ok"}
+			w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+			w.WriteHeader(http.StatusOK)
+			if err := json.NewEncoder(w).Encode(okStatus); err != nil {
+				panic(err)
+			}
+		},
+	)
+
+	listener := tcpListener(sURL)
+	log.Info("Starting Server on ", listener.Addr())
+	log.Info("Hit CTRL + C to exit")
+
+	if err = http.Serve(listener, nil); err != nil {
+		log.Fatalf("local server error: %v", err)
+	}
+	return err
 }
 
 func tcpListener(sURL string) (listener net.Listener) {

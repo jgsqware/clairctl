@@ -30,7 +30,7 @@ var Insecure = false
 var NoClean = false
 
 var ImageName string
-var ClusterImages  map[string]struct{}
+var ClusterImages map[string]struct{}
 
 type reportConfig struct {
 	Path, Format string
@@ -77,7 +77,7 @@ func Init(cfgFile string, logLevel string, noClean bool) {
 	capnslog.SetGlobalLogLevel(lvl)
 	capnslog.SetFormatter(capnslog.NewPrettyFormatter(os.Stdout, false))
 
-	viper.SetEnvPrefix("clairctl")
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_", "-", "_"))
 	viper.SetConfigName("clairctl")        // name of config file (without extension)
 	viper.AddConfigPath("$HOME/.clairctl") // adding home directory as first search path
 	viper.AddConfigPath(".")               // adding home directory as first search path

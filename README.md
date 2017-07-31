@@ -140,6 +140,46 @@ If you are running the stack with the provided `docker-compose.yml`, don't forge
 
 All steps are detailed in the Docker-compose section above.
 
+## I get a "client is newer than server" error
+
+When working with local images, you can experience the following erro : 
+
+```
+Error response from daemon: client is newer than server (client API version: 1.26, server API version: 1.23)
+```
+
+Don't panic, this is due to your Docker daemon running an API version older than the one from the Docker client API bundled with clairctl.
+
+First, check out your docker version:
+
+```bash
+$ docker version
+
+Client:
+ Version:      1.11.2
+ API version:  1.23
+ Go version:   go1.5.4
+ Git commit:   b9f10c9
+ Built:        Wed Jun  1 21:20:08 2016
+ OS/Arch:      linux/amd64
+
+Server:
+ Version:      1.11.2
+ API version:  1.23
+ Go version:   go1.7.3
+ Git commit:   4dc5990
+ Built:        
+ OS/Arch:      linux/amd64
+```
+
+Simply run clairctl with the corresponding `DOCKER_API_VERSION` environment variable to enable compatibility with your Docker API version.
+
+```bash
+$ DOCKER_API_VERSION=1.23 clairctl push -l mynamespace/myimage:mytag
+```
+
+Bear in mind that this might not work with very old versions of Docker daemon.
+
 # Contribution and Test
 
 Go to /contrib folder

@@ -32,6 +32,12 @@ var reportCmd = &cobra.Command{
 		}
 
 		analyzes := clair.Analyze(image, manifest)
+
+		if whitelistConfig != "" {
+			whiteListProcessor := NewWhiteList(whitelistConfig)
+			whiteListProcessor.filter(analyzes)
+		}
+
 		imageName := strings.Replace(analyzes.ImageName, "/", "-", -1)
 		if analyzes.Tag != "" {
 			imageName += "-" + analyzes.Tag
@@ -74,5 +80,6 @@ func init() {
 	RootCmd.AddCommand(reportCmd)
 	reportCmd.Flags().BoolVarP(&config.IsLocal, "local", "l", false, "Use local images")
 	reportCmd.Flags().StringP("format", "f", "html", "Format for Report [html,json]")
+	reportCmd.Flags().StringVarP(&whitelistConfig, "whitelist", "w", "", "YAML Configuration file for severity whitelisting")
 	viper.BindPFlag("clair.report.format", reportCmd.Flags().Lookup("format"))
 }

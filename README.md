@@ -103,6 +103,22 @@ clair:
     format: html
 ```
 
+## Optional whitelist yaml file
+
+This is an example yaml file. You can have an empty file or a mix with only `generalwhitelist` or `images`.
+
+```yaml
+generalwhitelist: #Approve CVE for any image
+  CVE-2016-2148: BusyBox
+  CVE-2014-8625: Why is it whitelisted
+images:
+  ubuntu: #Approve CVE only for ubuntu image, regardless of the version
+    CVE-2014-2667: Python
+    CVE-2017-5230: Something
+  alpine:
+    CVE-2016-7068: Something
+```
+
 # Building the latest binaries
 
 **clairctl** requires Go 1.8+.

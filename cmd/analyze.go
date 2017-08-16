@@ -23,6 +23,7 @@ Image: {{.String}}
 `
 
 var filters string
+var whitelistConfig string
 var noFail bool
 
 var analyzeCmd = &cobra.Command{
@@ -55,6 +56,11 @@ var analyzeCmd = &cobra.Command{
 		}
 
 		analysis := clair.Analyze(image, manifest)
+
+		if whitelistConfig != "" {
+			whiteListProcessor := NewWhiteList(whitelistConfig)
+			whiteListProcessor.filter(analysis)
+		}
 
 		log.Debug("Using priority filters: ", filters)
 
@@ -153,6 +159,7 @@ func CountVulnerabilities(l v1.LayerEnvelope) []PriorityCount {
 func init() {
 	RootCmd.AddCommand(analyzeCmd)
 	analyzeCmd.Flags().StringVarP(&filters, "filters", "f", "", "Filters Severity, comma separated (eg. High,Critical)")
+	analyzeCmd.Flags().StringVarP(&whitelistConfig, "whitelist", "w", "", "YAML Configuration file for severity whitelisting")
 	analyzeCmd.Flags().BoolVarP(&config.IsLocal, "local", "l", false, "Use local images")
 	analyzeCmd.Flags().BoolVarP(&noFail, "noFail", "n", false, "Not exiting with non-zero even with vulnerabilities found")
 }

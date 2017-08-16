@@ -10,7 +10,18 @@ import (
 
 func NewWhiteList(path string) *WhiteList {
 	w := &WhiteList{path: path}
-	w.init()
+	w.whitelisted = vulnerabilitiesWhitelist{}
+
+	whitelistBytes, err := ioutil.ReadFile(w.path)
+	if err != nil {
+		log.Fatalf("file error %s", err)
+	}
+
+	err = yaml.Unmarshal(whitelistBytes, &w.whitelisted)
+	if err != nil {
+		log.Fatalf("unmarsh error %s : %v", w.path, err)
+	}
+
 	return w
 }
 
@@ -24,27 +35,15 @@ type WhiteList struct {
 	whitelisted vulnerabilitiesWhitelist
 }
 
-func (v *WhiteList) init() {
-	v.whitelisted = vulnerabilitiesWhitelist{}
-	whitelistBytes, err := ioutil.ReadFile(v.path)
-	if err != nil {
-		log.Fatalf("file error %s", err)
-	}
-	err = yaml.Unmarshal(whitelistBytes, &v.whitelisted)
-	if err != nil {
-		log.Fatalf("unmarsh error %s : %v", v.path, err)
-	}
-}
-
 func (v *WhiteList) filter(analysis clair.ImageAnalysis) {
 
 	//access by ref to not reconstruct the whole struc
 
-	for indexLayerEnvelope := range analysis.Layers {
-		for indexFeature := range analysis.Layers[indexLayerEnvelope].Layer.Features {
+	for i := range analysis.Layers {
+		for f := range analysis.Layers[i].Layer.Features {
 
 			filteredVulnerabilities := []v1.Vulnerability{}
-			for _, vulnerability := range analysis.Layers[indexLayerEnvelope].Layer.Features[indexFeature].Vulnerabilities {
+			for _, vulnerability := range analysis.Layers[i].Layer.Features[f].Vulnerabilities {
 				if ! v.isWhiteListed(vulnerability.NamespaceName, vulnerability.Name) {
 					filteredVulnerabilities = append(filteredVulnerabilities, vulnerability)
 				} else {
@@ -52,15 +51,14 @@ func (v *WhiteList) filter(analysis clair.ImageAnalysis) {
 				}
 			}
 
-			analysis.Layers[indexLayerEnvelope].Layer.Features[indexFeature].Vulnerabilities = filteredVulnerabilities
+			analysis.Layers[i].Layer.Features[f].Vulnerabilities = filteredVulnerabilities
 		}
 	}
 }
 
 func (v *WhiteList) isWhiteListed(namespace string, vulnerability string) bool {
-	imagesWhitelist := v.getImageWhiteList(namespace)
 
-	if _, exists := imagesWhitelist[vulnerability]; exists {
+	if _, exists := v.getImageWhiteList(namespace)[vulnerability]; exists {
 		return true
 	}
 

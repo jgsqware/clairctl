@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/template"
@@ -16,6 +17,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type AnalyseInfo struct {
+	Image string
+	Vulns []PriorityCount
+}
+
 const analyzeTplt = `
 Image: {{.String}}
  {{range $v := vulns .MostRecentLayer}}
@@ -25,6 +31,7 @@ Image: {{.String}}
 var filters string
 var whitelistConfig string
 var noFail bool
+var format string
 
 var analyzeCmd = &cobra.Command{
 	Use:   "analyze IMAGE",
@@ -64,14 +71,27 @@ var analyzeCmd = &cobra.Command{
 
 		log.Debug("Using priority filters: ", filters)
 
-		funcMap := template.FuncMap{
-			"vulns":     CountVulnerabilities,
-			"colorized": colorized,
-		}
-		err = template.Must(template.New("analysis").Funcs(funcMap).Parse(analyzeTplt)).Execute(os.Stdout, analysis)
-		if err != nil {
-			fmt.Println(errInternalError)
-			log.Fatalf("rendering analysis: %v", err)
+		switch format {
+		case "plain":
+			funcMap := template.FuncMap{
+				"vulns":     CountVulnerabilities,
+				"colorized": colorized,
+			}
+			err = template.Must(template.New("analysis").Funcs(funcMap).Parse(analyzeTplt)).Execute(os.Stdout, analysis)
+			if err != nil {
+				fmt.Println(errInternalError)
+				log.Fatalf("rendering analysis: %v", err)
+			}
+		case "json":
+			var vulns = []PriorityCount{}
+			for _, layer := range analysis.Layers {
+				vulns = append(vulns, CountVulnerabilities(layer)...)
+			}
+			var info = AnalyseInfo{Image: analysis.ImageName, Vulns: vulns}
+			b, _ := json.MarshalIndent(info, "", "    ")
+			fmt.Println(string(b))
+		default:
+			log.Fatalf("Bad format type '%s'", format)
 		}
 
 		if !isValid(analysis.MostRecentLayer()) && !noFail {
@@ -162,4 +182,5 @@ func init() {
 	analyzeCmd.Flags().StringVarP(&whitelistConfig, "whitelist", "w", "", "YAML Configuration file for severity whitelisting")
 	analyzeCmd.Flags().BoolVarP(&config.IsLocal, "local", "l", false, "Use local images")
 	analyzeCmd.Flags().BoolVarP(&noFail, "noFail", "n", false, "Not exiting with non-zero even with vulnerabilities found")
+	analyzeCmd.Flags().StringVar(&format, "format", "plain", "Output format (plain, json)")
 }

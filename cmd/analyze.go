@@ -83,11 +83,17 @@ var analyzeCmd = &cobra.Command{
 				log.Fatalf("rendering analysis: %v", err)
 			}
 		case "json":
-			var rawVulns = []v1.Vulnerability{}
+			var vulnsMap = make(map[string]v1.Vulnerability)
 			for _, layer := range analysis.Layers {
 				for _, f := range layer.Layer.Features {
-					rawVulns = append(rawVulns, f.Vulnerabilities...)
+					for _, vuln := range f.Vulnerabilities {
+						vulnsMap[vuln.Name] = vuln
+					}
 				}
+			}
+			var rawVulns = make([]v1.Vulnerability, 0, len(vulnsMap))
+			for _, value := range vulnsMap {
+				rawVulns = append(rawVulns, value)
 			}
 			var vulns = CountRawVulnerabilities(rawVulns)
 			var info = AnalyseInfo{Image: analysis.ImageName, Vulns: vulns}

@@ -133,6 +133,7 @@ Clone and build:
 git clone git@github.com:jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
 cd $GOPATH/src/github.com/jgsqware/clairctl
 glide install -v
+go get -u github.com/jteeuwen/go-bindata/...
 go generate ./clair
 go build
 ```

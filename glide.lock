@@ -1,5 +1,5 @@
-hash: 3f5fcdb416813bfe039ac6d843df9512e561cead3f6418cebbceb49d41c3782c
-updated: 2017-09-08T10:25:21.466080776+01:00
+hash: 328881464b35b8358634bf2798ca3134d24d6b0ac3b84490216c035c1bd70faa
+updated: 2017-09-08T11:12:00.459729188+01:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -275,7 +275,7 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/Sirupsen/logrus
-  version: 26709e2714106fb8ad40b773b711ebce25b78914
+  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:
@@ -284,7 +284,7 @@ imports:
 - name: github.com/spf13/cast
   version: 2580bc98dc0e62908119e4737030cc2fdfc45e4c
 - name: github.com/spf13/cobra
-  version: b78744579491c1ceeaaa3b40205e56b0591b93a3
+  version: a3cd8ab85aeba3522b9b59242f3b86ddbc67f8bd
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
@@ -308,6 +308,7 @@ imports:
   - ed25519
   - ed25519/internal/edwards25519
   - ssh
+  - ssh/terminal
 - name: golang.org/x/net
   version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
   subpackages:

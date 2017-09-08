@@ -17,7 +17,7 @@ import:
   subpackages:
   - tlsconfig
 - package: github.com/spf13/cobra
-  version: b78744579491c1ceeaaa3b40205e56b0591b93a3
+  version: a3cd8ab85aeba3522b9b59242f3b86ddbc67f8bd
 - package: github.com/spf13/viper
   version: v1.0.0
 - package: golang.org/x/net
@@ -36,6 +36,8 @@ import:
   - distribution
   - reference
   - registry
+- package: github.com/Sirupsen/logrus
+  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - package: github.com/spf13/pflag
   version: 7597b2702729ebb651fc9bb2adac40bcc62db82d
 - package: golang.org/x/crypto

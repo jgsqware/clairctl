@@ -1,6 +1,7 @@
 package: github.com/jgsqware/clairctl
 import:
 - package: github.com/artyom/untar
+  version: 02ed5a2449a661eb02b1e3d658524223ab726412
 - package: github.com/coreos/clair
   version: ^1.2.6
   subpackages:
@@ -16,7 +17,9 @@ import:
   subpackages:
   - tlsconfig
 - package: github.com/spf13/cobra
+  version: b78744579491c1ceeaaa3b40205e56b0591b93a3
 - package: github.com/spf13/viper
+  version: v1.0.0
 - package: golang.org/x/net
   version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
   subpackages:

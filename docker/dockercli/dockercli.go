@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"strings"
 	"syscall"
@@ -99,11 +98,7 @@ func save(imageName string) (distribution.Manifest, error) {
 	if err != nil {
 		return nil, fmt.Errorf("cannot save image %s: %s", imageName, err)
 	}
-	all, err := ioutil.ReadAll(img)
-	if err != nil {
-		panic(err)
-	}
-	img.Close()
+	defer img.Close()
 
 	fo, err := os.Create(path + "/output.tar")
 	// close fo on exit and check for its returned error
@@ -118,8 +113,24 @@ func save(imageName string) (distribution.Manifest, error) {
 		return nil, err
 	}
 
-	if _, err := fo.Write(all); err != nil {
-		panic(err)
+	// make a buffer to keep chunks that are read
+	buf := make([]byte, 1024)
+	for {
+		// read a chunk
+		n, err := img.Read(buf)
+		if err != nil && err != io.EOF {
+			log.Error(err)
+			return nil, err
+		}
+		if n == 0 {
+			break
+		}
+
+		// write a chunk
+		if _, err := fo.Write(buf[:n]); err != nil {
+			log.Error(err)
+			return nil, err
+		}
 	}
 
 	err = openAndUntar(path+"/output.tar", path)

@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/template"
@@ -16,6 +17,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+type AnalyseInfo struct {
+	Image string
+	Vulns []PriorityCount
+}
+
 const analyzeTplt = `
 Image: {{.String}}
  {{range $v := vulns .MostRecentLayer}}
@@ -25,6 +31,7 @@ Image: {{.String}}
 var filters string
 var whitelistConfig string
 var noFail bool
+var format string
 
 var analyzeCmd = &cobra.Command{
 	Use:   "analyze IMAGE",
@@ -64,14 +71,36 @@ var analyzeCmd = &cobra.Command{
 
 		log.Debug("Using priority filters: ", filters)
 
-		funcMap := template.FuncMap{
-			"vulns":     CountVulnerabilities,
-			"colorized": colorized,
-		}
-		err = template.Must(template.New("analysis").Funcs(funcMap).Parse(analyzeTplt)).Execute(os.Stdout, analysis)
-		if err != nil {
-			fmt.Println(errInternalError)
-			log.Fatalf("rendering analysis: %v", err)
+		switch format {
+		case "plain":
+			funcMap := template.FuncMap{
+				"vulns":     CountVulnerabilities,
+				"colorized": colorized,
+			}
+			err = template.Must(template.New("analysis").Funcs(funcMap).Parse(analyzeTplt)).Execute(os.Stdout, analysis)
+			if err != nil {
+				fmt.Println(errInternalError)
+				log.Fatalf("rendering analysis: %v", err)
+			}
+		case "json":
+			var vulnsMap = make(map[string]v1.Vulnerability)
+			for _, layer := range analysis.Layers {
+				for _, f := range layer.Layer.Features {
+					for _, vuln := range f.Vulnerabilities {
+						vulnsMap[vuln.Name] = vuln
+					}
+				}
+			}
+			var rawVulns = make([]v1.Vulnerability, 0, len(vulnsMap))
+			for _, value := range vulnsMap {
+				rawVulns = append(rawVulns, value)
+			}
+			var vulns = CountRawVulnerabilities(rawVulns)
+			var info = AnalyseInfo{Image: analysis.ImageName, Vulns: vulns}
+			b, _ := json.MarshalIndent(info, "", "    ")
+			fmt.Println(string(b))
+		default:
+			log.Fatalf("Bad format type '%s'", format)
 		}
 
 		if !isValid(analysis.MostRecentLayer()) && !noFail {
@@ -126,8 +155,8 @@ func getPrioritiesFromArgs() []types.Priority {
 	}
 	return f
 }
-func CountVulnerabilities(l v1.LayerEnvelope) []PriorityCount {
 
+func CountRawVulnerabilities(vulns []v1.Vulnerability) []PriorityCount {
 	filtersS := getPrioritiesFromArgs()
 
 	if len(filtersS) == 0 {
@@ -138,11 +167,9 @@ func CountVulnerabilities(l v1.LayerEnvelope) []PriorityCount {
 		r[v] = 0
 	}
 
-	for _, f := range l.Layer.Features {
-		for _, v := range f.Vulnerabilities {
-			if _, ok := r[types.Priority(v.Severity)]; ok {
-				r[types.Priority(v.Severity)]++
-			}
+	for _, v := range vulns {
+		if _, ok := r[types.Priority(v.Severity)]; ok {
+			r[types.Priority(v.Severity)]++
 		}
 	}
 
@@ -156,10 +183,19 @@ func CountVulnerabilities(l v1.LayerEnvelope) []PriorityCount {
 	return result
 }
 
+func CountVulnerabilities(l v1.LayerEnvelope) []PriorityCount {
+	var vulns = []v1.Vulnerability{}
+	for _, f := range l.Layer.Features {
+		vulns = append(vulns, f.Vulnerabilities...)
+	}
+	return CountRawVulnerabilities(vulns)
+}
+
 func init() {
 	RootCmd.AddCommand(analyzeCmd)
 	analyzeCmd.Flags().StringVarP(&filters, "filters", "f", "", "Filters Severity, comma separated (eg. High,Critical)")
 	analyzeCmd.Flags().StringVarP(&whitelistConfig, "whitelist", "w", "", "YAML Configuration file for severity whitelisting")
 	analyzeCmd.Flags().BoolVarP(&config.IsLocal, "local", "l", false, "Use local images")
 	analyzeCmd.Flags().BoolVarP(&noFail, "noFail", "n", false, "Not exiting with non-zero even with vulnerabilities found")
+	analyzeCmd.Flags().StringVar(&format, "format", "plain", "Output format (plain, json)")
 }

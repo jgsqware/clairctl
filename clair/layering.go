@@ -80,23 +80,24 @@ func (layers *layering) pushAll() error {
 }
 
 func (layers *layering) analyzeAll() ImageAnalysis {
-	layerCount := len(layers.digests)
 	res := []v1.LayerEnvelope{}
-
-	for index := range layers.digests {
-		digest := layers.digests[layerCount-index-1]
-		if config.IsLocal {
-			digest = strings.TrimPrefix(digest, "sha256:")
-		}
-		lShort := xstrings.Substr(digest, 0, 12)
-
-		if a, err := analyzeLayer(digest); err != nil {
-			log.Errorf("analysing layer [%v] %d/%d: %v", lShort, index+1, layerCount, err)
-		} else {
-			log.Infof("analysing layer [%v] %d/%d", lShort, index+1, layerCount)
-			res = append(res, a)
-		}
+	layerCount := len(layers.digests)
+	if layerCount == 0 {
+		logrus.Warningln("there is no layer to push")
 	}
+	
+	digest := layers.digests[len(layers.digests)-1]
+	if config.IsLocal {
+		digest = strings.TrimPrefix(digest, "sha256:")
+	}
+	lShort := xstrings.Substr(digest, 0, 12)
+	if a, err := analyzeLayer(digest); err != nil {
+		log.Errorf("analysing layer [%v]: %v", lShort, err)
+	} else {
+		log.Infof("analysing layer [%v]", lShort)
+		res = append(res, a)
+	}
+
 	return ImageAnalysis{
 		Registry:  xstrings.TrimPrefixSuffix(layers.image.Hostname(), "http://", "/v2"),
 		ImageName: layers.image.Name(),

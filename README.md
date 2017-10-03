@@ -24,7 +24,7 @@ curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | 
 # Docker-compose
 
 ```bash
-$ git clone git@github.com:jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
+$ git clone https://github.com/jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
 $ cd $GOPATH/src/github.com/jgsqware/clairctl
 $ docker-compose up -d postgres
 Creating network "clairctl_default" with the default driver
@@ -130,7 +130,7 @@ curl https://glide.sh/get | sh
 
 Clone and build:
 ```
-git clone git@github.com:jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
+git clone https://github.com/jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
 cd $GOPATH/src/github.com/jgsqware/clairctl
 glide install -v
 go get -u github.com/jteeuwen/go-bindata/...

@@ -26,7 +26,7 @@ curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | 
 ```bash
 $ git clone https://github.com/jgsqware/clairctl.git $GOPATH/src/github.com/jgsqware/clairctl
 $ cd $GOPATH/src/github.com/jgsqware/clairctl
-$ docker-compose up -d postgres
+$ docker-compose up -d
 Creating network "clairctl_default" with the default driver
 Creating clairctl_postgres_1 ...
 Creating clairctl_clair_1 ...

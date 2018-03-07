@@ -25,12 +25,11 @@ import (
 
 var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockercli")
 
-//GetLocalManifest retrieve manifest for local image
-func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
+func parseImage(imageName string) (reference.NamedTagged, error) {
 
 	n, err := reference.ParseNamed(imageName)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 	var image reference.NamedTagged
 	if reference.IsNameOnly(n) {
@@ -38,14 +37,27 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	} else {
 		image = n.(reference.NamedTagged)
 	}
+
+	return image, nil
+
+}
+
+func tempImagePath(image reference.NamedTagged) string {
+
+	return strings.Replace(strings.Replace(fmt.Sprintf("%s/%s", image.FullName(), image.Tag()), ".", "_", -1), ":", "_", -1)
+}
+
+//GetLocalManifest retrieve manifest for local image
+func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
+	image, err := parseImage(imageName)
 	if err != nil {
 		return nil, nil, err
 	}
 	var manifest distribution.Manifest
 	if withExport {
-		manifest, err = save(image.Name() + ":" + image.Tag())
+		manifest, err = save(image)
 	} else {
-		manifest, err = historyFromCommand(image.Name() + ":" + image.Tag())
+		manifest, err = historyFromCommand(image)
 	}
 
 	if err != nil {
@@ -57,22 +69,9 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	return image, m, err
 }
 
-func saveImage(imageName string, fo *os.File) error {
+func save(image reference.NamedTagged) (distribution.Manifest, error) {
 
-	return nil
-	// save.Stderr = &stderr
-
-	// save.Stdout = writer
-	// err := save.Run()
-	// if err != nil {
-	// 	return errors.New(stderr.String())
-	// }
-
-	// return nil
-}
-
-func save(imageName string) (distribution.Manifest, error) {
-	path := config.TmpLocal() + "/" + strings.Split(imageName, ":")[0] + "/blobs"
+	path := config.TmpLocal() + "/" + tempImagePath(image) + "/blobs"
 
 	if _, err := os.Stat(path); os.IsExist(err) {
 		err := os.RemoveAll(path)
@@ -86,7 +85,7 @@ func save(imageName string) (distribution.Manifest, error) {
 		return nil, err
 	}
 
-	log.Debug("docker image to save: ", imageName)
+	log.Debug("docker image to save: ", image.String())
 	log.Debug("saving in: ", path)
 
 	cli, err := client.NewEnvClient()
@@ -94,9 +93,9 @@ func save(imageName string) (distribution.Manifest, error) {
 		panic(err)
 	}
 
-	img, err := cli.ImageSave(context.Background(), []string{imageName})
+	img, err := cli.ImageSave(context.Background(), []string{image.String()})
 	if err != nil {
-		return nil, fmt.Errorf("cannot save image %s: %s", imageName, err)
+		return nil, fmt.Errorf("cannot save image %s: %s", image.String(), err)
 	}
 	defer img.Close()
 
@@ -188,13 +187,13 @@ func historyFromManifest(path string) (distribution.Manifest, error) {
 	return m, nil
 }
 
-func historyFromCommand(imageName string) (schema1.SignedManifest, error) {
+func historyFromCommand(image reference.NamedTagged) (schema1.SignedManifest, error) {
 
 	client, err := client.NewEnvClient()
 	if err != nil {
 		return schema1.SignedManifest{}, err
 	}
-	histories, err := client.ImageHistory(context.Background(), imageName)
+	histories, err := client.ImageHistory(context.Background(), image.String())
 
 	manifest := schema1.SignedManifest{}
 	for _, history := range histories {

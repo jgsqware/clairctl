@@ -1,7 +1,6 @@
 package dockercli
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/docker/docker/reference"
@@ -9,12 +8,12 @@ import (
 
 func TestImageParsing(t *testing.T) {
 	images := map[string]string{
-		"ubuntu:14.04":                          "dockerio/library/ubuntu/1404",
-		"ubuntu/ubuntu:14.04":                   "dockerio/ubuntu/ubuntu/1404",
-		"registry.com/ubuntu:14.04":             "registrycom/ubuntu/1404",
-		"registry.com/ubuntu/ubuntu:14.04":      "registrycom/ubuntu/ubuntu/1404",
-		"registry.com:5000/ubuntu:14.04":        "registrycom5000/ubuntu/1404",
-		"registry.com:5000/ubuntu/ubuntu:14.04": "registrycom5000/ubuntu/ubuntu/1404",
+		"ubuntu:14.04":                          "docker_io/library/ubuntu/14_04",
+		"ubuntu/ubuntu:14.04":                   "docker_io/ubuntu/ubuntu/14_04",
+		"registry.com/ubuntu:14.04":             "registry_com/ubuntu/14_04",
+		"registry.com/ubuntu/ubuntu:14.04":      "registry_com/ubuntu/ubuntu/14_04",
+		"registry.com:5000/ubuntu:14.04":        "registry_com_5000/ubuntu/14_04",
+		"registry.com:5000/ubuntu/ubuntu:14.04": "registry_com_5000/ubuntu/ubuntu/14_04",
 	}
 
 	for value, expected := range images {
@@ -29,12 +28,6 @@ func TestImageParsing(t *testing.T) {
 		} else {
 			image = n.(reference.NamedTagged)
 		}
-		fmt.Println("Name(): ", image.Name())
-		fmt.Println("String(): ", image.String())
-		fmt.Println("FullName(): ", image.FullName())
-		fmt.Println("Hostname(): ", image.Hostname())
-		fmt.Println("RemoteName(): ", image.RemoteName())
-		fmt.Println("Tag(): ", image.Tag())
 
 		result := tempImagePath(image)
 

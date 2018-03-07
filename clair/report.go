@@ -91,11 +91,20 @@ func AllVulnerabilities(imageAnalysis ImageAnalysis) vulnerabiliesCounts {
 	result := make(vulnerabiliesCounts)
 
 	l := imageAnalysis.MostRecentLayer()
+	vulnerabilities := make(map[string]string)
 
 	for _, f := range l.Layer.Features {
-
 		for _, v := range f.Vulnerabilities {
-			result[types.Priority(v.Severity)]++
+			if _, exist := vulnerabilities[v.Name]; !exist {
+				vulnerabilities[v.Name] = v.Severity
+			}
+		}
+	}
+	for _, p := range invertedPriorities() {
+		for _, v := range vulnerabilities {
+			if types.Priority(v) == p {
+				result[p]++
+			}
 		}
 	}
 

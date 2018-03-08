@@ -44,7 +44,7 @@ func parseImage(imageName string) (reference.NamedTagged, error) {
 
 func tempImagePath(image reference.NamedTagged) string {
 
-	return strings.Replace(strings.Replace(fmt.Sprintf("%s/%s", image.FullName(), image.Tag()), ".", "_", -1), ":", "_", -1)
+	return fmt.Sprintf("%s", image.FullName())
 }
 
 //GetLocalManifest retrieve manifest for local image

@@ -1,5 +1,5 @@
-hash: 93844a64dc51db6338d9ea0215e614e4f7ef8e2ca845534c6e81064696ed2b42
-updated: 2017-06-27T17:57:43.60340145+02:00
+hash: 328881464b35b8358634bf2798ca3134d24d6b0ac3b84490216c035c1bd70faa
+updated: 2017-09-08T11:12:00.459729188+01:00
 imports:
 - name: cloud.google.com/go
   version: 3b1ae45394a234c385be014e9a488f2bb6eef821
@@ -141,7 +141,7 @@ imports:
   - sockets
   - tlsconfig
 - name: github.com/docker/go-units
-  version: f2d77a61e3c169b43402a0a1e84f06daf29b8190
+  version: 0dadbb0345b35ec7ef35e228dabb8de89a65bf52
 - name: github.com/docker/libtrust
   version: fa567046d9b14f6aa788882a950d69651d230b21
 - name: github.com/emicklei/go-restful
@@ -214,9 +214,11 @@ imports:
   - jlexer
   - jwriter
 - name: github.com/mattn/go-colorable
-  version: 941b50ebc6efddf4c41c8e4537a5f68a4e686b24
+  version: 5411d3eea5978e6cdc258b30de592b60df6aba96
+  repo: https://github.com/mattn/go-colorable
 - name: github.com/mattn/go-isatty
-  version: fc9e8d8ef48496124e79ae0df75490096eccf6fe
+  version: 57fdcb988a5c543893cc61bce354a6e24ab70022
+  repo: https://github.com/mattn/go-isatty
 - name: github.com/mattn/go-shellwords
   version: 525bedee691b5a8df547cb5cf9f86b7fb1883e24
 - name: github.com/matttproud/golang_protobuf_extensions
@@ -273,7 +275,7 @@ imports:
 - name: github.com/PuerkitoBio/urlesc
   version: 5bd2802263f21d8788851d5305584c82a5c75d7e
 - name: github.com/Sirupsen/logrus
-  version: d26492970760ca5d33129d2d799e34be5c4782eb
+  version: 89742aefa4b206dcf400792f3bd35b542998eb3b
 - name: github.com/spf13/afero
   version: 52e4a6cfac46163658bd4f123c49b6ee7dc75f78
   subpackages:
@@ -282,13 +284,13 @@ imports:
 - name: github.com/spf13/cast
   version: 2580bc98dc0e62908119e4737030cc2fdfc45e4c
 - name: github.com/spf13/cobra
-  version: 6e91dded25d73176bf7f60b40dd7aa1f0bf9be8d
+  version: a3cd8ab85aeba3522b9b59242f3b86ddbc67f8bd
 - name: github.com/spf13/jwalterweatherman
   version: 33c24e77fb80341fe7130ee7c594256ff08ccc46
 - name: github.com/spf13/pflag
   version: 7597b2702729ebb651fc9bb2adac40bcc62db82d
 - name: github.com/spf13/viper
-  version: 80ab6657f9ec7e5761f6603320d3d58dfe6970f6
+  version: 25b30aa063fc18e48662b86996252eabdcf2f0c7
 - name: github.com/ugorji/go
   version: f1f1a805ed361a0e078bb537e4ea78cd37dcf065
   subpackages:
@@ -306,6 +308,7 @@ imports:
   - ed25519
   - ed25519/internal/edwards25519
   - ssh
+  - ssh/terminal
 - name: golang.org/x/net
   version: 1d7a0b2100da090d8b02afcfb42f97e2c77e71a4
   subpackages:

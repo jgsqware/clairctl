@@ -18,7 +18,7 @@ Go to [Release](https://github.com/jgsqware/clairctl/releases) and download your
 ## Master branch version
 
 ```bash
-curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | sh
+curl -L https://raw.githubusercontent.com/jgsqware/clairctl/master/install.sh | bash
 ``` 
 
 # Docker-compose

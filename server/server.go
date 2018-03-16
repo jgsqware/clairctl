@@ -40,7 +40,12 @@ func Serve(sURL string) error {
 }
 
 func tcpListener(sURL string) (listener net.Listener) {
-	listener, err := net.Listen("tcp", sURL)
+	listenOn := sURL
+	if viper.GetString("clairctl.bind_addr") != "" {
+		listenOn = viper.GetString("clairctl.bind_addr") + ":" + viper.GetString("clairctl.port")
+	}
+	log.Debugf("Listinging on: %s", listenOn)
+	listener, err := net.Listen("tcp", listenOn)
 	if err != nil {
 		log.Fatalf("cannot instanciate listener: %v", err)
 	}

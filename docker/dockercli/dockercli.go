@@ -72,7 +72,7 @@ func saveImage(imageName string, fo *os.File) error {
 }
 
 func save(imageName string) (distribution.Manifest, error) {
-	path := config.TmpLocal() + "/" + strings.Split(imageName, ":")[0] + "/blobs"
+	path := config.TmpLocal() + "/docker.io/" + strings.Split(imageName, ":")[0] + "/blobs"
 
 	if _, err := os.Stat(path); os.IsExist(err) {
 		err := os.RemoveAll(path)

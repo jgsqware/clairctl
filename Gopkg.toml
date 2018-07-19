@@ -26,8 +26,8 @@
 
 
 [[constraint]]
-  name = "github.com/Sirupsen/logrus"
-  version = "0.11.5"
+  name = "github.com/sirupsen/logrus"
+  version = "1.0.5"
 
 [[constraint]]
   branch = "master"
@@ -35,15 +35,27 @@
 
 [[constraint]]
   name = "github.com/coreos/clair"
-  version = "1.2.6"
+  version = "2.0.4"
+
+[[override]]
+  name = "github.com/opencontainers/runc"
+  revision = "bc1467269fce13e9780345cfa25f9ca530601aba"
 
 [[constraint]]
   name = "github.com/docker/docker"
-  version = "17.5.0-ce-rc3"
+  revision = "683738900eec52f86b834234eeef054c4e135031"
 
 [[constraint]]
   name = "github.com/fatih/color"
   version = "1.7.0"
+
+[[override]]
+  name = "github.com/docker/go-metrics"
+  revision = "86f91d080d6a7d8b931efefd30fc30c5bb47602a"
+
+[[override]]
+  name = "github.com/prometheus/client_golang"
+  revision = "bcbbc08eb2ddff3af83bbf11e7ec13b4fd730b6e"
 
 [[constraint]]
   branch = "master"
@@ -65,9 +77,17 @@
   name = "gopkg.in/yaml.v2"
   version = "2.2.1"
 
-[[constraint]]
+[[override]]
   name = "k8s.io/client-go"
   version = "4.0.0"
+
+[[override]]
+  name = "github.com/Azure/go-ansiterm"
+  revision = "d6e3b3328b783f23731bc4d058875b0371ff8109"
+
+[[override]]
+  name = "github.com/containerd/containerd"
+  revision = "94cfce62ba9eabb58417cb5a663dc7a9feb68c07"
 
 [prune]
   go-tests = true

@@ -30,7 +30,7 @@ import (
 	"github.com/docker/distribution/registry/api/v2"
 	"github.com/docker/distribution/registry/client"
 	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/cli/config"
+	"github.com/docker/cli/cli/config"
 	"github.com/docker/docker/distribution"
 	"github.com/docker/docker/dockerversion"
 	"github.com/docker/distribution/reference"
@@ -54,7 +54,7 @@ func isInsecureRegistry(registryHostname string) bool {
 	return false
 }
 
-func getService() *registry.DefaultService {
+func getService() (*registry.DefaultService, error) {
 	serviceOptions := registry.ServiceOptions{
 		InsecureRegistries: viper.GetStringSlice("docker.insecure-registries"),
 	}
@@ -64,7 +64,11 @@ func getService() *registry.DefaultService {
 // getRepositoryClient returns a client for performing registry operations against the given named
 // image.
 func getRepositoryClient(image reference.Named, insecure bool, scopes ...string) (distlib.Repository, error) {
-	service := getService()
+	service, err := getService()
+	if err != nil {
+		log.Debugf("Cannot get service: %v", err)
+		return nil, err
+	}
 	log.Debugf("Retrieving repository client")
 
 	ctx := context.Background()
@@ -126,7 +130,11 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 }
 
 func GetPushURL(hostname string) (*url.URL, error) {
-	service := getService()
+	service, err := getService()
+	if err != nil {
+		log.Debugf("Cannot get service: %v", err)
+		return nil, err
+	}
 	endpoints, err := service.LookupPushEndpoints(hostname)
 	if err != nil {
 		log.Debugf("registry.LookupPushEndpoints error: %v", err)

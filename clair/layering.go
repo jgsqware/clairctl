@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/coreos/clair/api/v1"
 	"github.com/docker/distribution/reference"
 	"github.com/jgsqware/clairctl/config"

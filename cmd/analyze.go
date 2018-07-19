@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/coreos/clair/api/v1"
-	"github.com/coreos/clair/utils/types"
+	"github.com/coreos/clair/database"
 	"github.com/fatih/color"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
@@ -75,26 +75,26 @@ var analyzeCmd = &cobra.Command{
 }
 
 type PriorityCount struct {
-	Priority types.Priority
+	Priority database.Severity
 	Count    int
 }
 
 func colorized(p PriorityCount) string {
 	switch p.Priority {
 
-	case types.Unknown:
+	case database.UnknownSeverity:
 		return color.WhiteString("%v: %v", p.Priority, p.Count)
-	case types.Negligible:
+	case database.NegligibleSeverity:
 		return color.HiWhiteString("%v: %v", p.Priority, p.Count)
-	case types.Low:
+	case database.LowSeverity:
 		return color.YellowString("%v: %v", p.Priority, p.Count)
-	case types.Medium:
+	case database.MediumSeverity:
 		return color.HiYellowString("%v: %v", p.Priority, p.Count)
-	case types.High:
+	case database.HighSeverity:
 		return color.MagentaString("%v: %v", p.Priority, p.Count)
-	case types.Critical:
+	case database.CriticalSeverity:
 		return color.RedString("%v: %v", p.Priority, p.Count)
-	case types.Defcon1:
+	case database.Defcon1Severity:
 		return color.HiRedString("%v: %v", p.Priority, p.Count)
 	default:
 		return color.WhiteString("%v: %v", p.Priority, p.Count)
@@ -111,11 +111,12 @@ func isValid(l v1.LayerEnvelope) bool {
 	return true
 }
 
-func getPrioritiesFromArgs() []types.Priority {
-	f := []types.Priority{}
+func getPrioritiesFromArgs() []database.Severity {
+	f := []database.Severity{}
 	for _, aa := range strings.Split(filters, ",") {
-		if types.Priority(aa).IsValid() {
-			f = append(f, types.Priority(aa))
+		s, err := database.NewSeverity(aa)
+		if err == nil {
+			f = append(f, s)
 		}
 	}
 	return f
@@ -125,23 +126,23 @@ func CountVulnerabilities(l v1.LayerEnvelope) []PriorityCount {
 	filtersS := getPrioritiesFromArgs()
 
 	if len(filtersS) == 0 {
-		filtersS = types.Priorities
+		filtersS = database.Severities
 	}
-	r := make(map[types.Priority]int)
+	r := make(map[database.Severity]int)
 	for _, v := range filtersS {
 		r[v] = 0
 	}
 
 	for _, f := range l.Layer.Features {
 		for _, v := range f.Vulnerabilities {
-			if _, ok := r[types.Priority(v.Severity)]; ok {
-				r[types.Priority(v.Severity)]++
+			if _, ok := r[database.Severity(v.Severity)]; ok {
+				r[database.Severity(v.Severity)]++
 			}
 		}
 	}
 
 	result := []PriorityCount{}
-	for _, p := range types.Priorities {
+	for _, p := range database.Severities {
 		if pp, ok := r[p]; ok {
 			result = append(result, PriorityCount{p, pp})
 		}

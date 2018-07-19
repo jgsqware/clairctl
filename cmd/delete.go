@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"github.com/jgsqware/clairctl/clair"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"

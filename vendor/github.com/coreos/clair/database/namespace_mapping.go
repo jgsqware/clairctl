@@ -21,13 +21,15 @@ var DebianReleasesMapping = map[string]string{
 	"wheezy":  "7",
 	"jessie":  "8",
 	"stretch": "9",
+	"buster":  "10",
 	"sid":     "unstable",
 
 	// Class names
-	"oldstable": "7",
-	"stable":    "8",
-	"testing":   "9",
-	"unstable":  "unstable",
+	"oldoldstable": "7",
+	"oldstable":    "8",
+	"stable":       "9",
+	"testing":      "10",
+	"unstable":     "unstable",
 }
 
 // UbuntuReleasesMapping translates Ubuntu code names to version numbers
@@ -41,4 +43,7 @@ var UbuntuReleasesMapping = map[string]string{
 	"wily":    "15.10",
 	"xenial":  "16.04",
 	"yakkety": "16.10",
+	"zesty":   "17.04",
+	"artful":  "17.10",
+	"bionic":  "18.04",
 }

@@ -8,7 +8,7 @@ ARG CLAIRCTL_VERSION=${CLAIRCTL_VERSION:-master}
 ARG CLAIRCTL_COMMIT=
 
 RUN apk add --update curl \
- && apk add --virtual build-dependencies go gcc build-base glide git \
+ && apk add --virtual build-dependencies go gcc build-base git \
  && adduser clairctl -D \
  && mkdir -p /reports \
  && chown -R clairctl:clairctl /reports /tmp \
@@ -22,12 +22,10 @@ RUN apk add --update curl \
  && rm -f clairctl.zip \
  && mv ${GOPATH}/src/github.com/jgsqware/clairctl-* ${GOPATH}/src/github.com/jgsqware/clairctl \
  && cd ${GOPATH}/src/github.com/jgsqware/clairctl \
- && glide install -v \
  && go generate ./clair \
  && go build -o /usr/local/bin/clairctl -ldflags "-X github.com/jgsqware/clairctl/cmd.version=${CLAIRCTL_VERSION}-${CLAIRCTL_COMMIT}" \
  && apk del build-dependencies \
  && rm -rf /var/cache/apk/* \
- && rm -rf /root/.glide/ \
  && rm -rf /go \
  && echo $'clair:\n\
   port: 6060\n\

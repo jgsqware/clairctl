@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"os"
 
-	"github.com/docker/docker/reference"
+	"github.com/docker/distribution/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/jgsqware/clairctl/docker"
 	"github.com/opencontainers/go-digest"

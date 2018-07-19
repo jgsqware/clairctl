@@ -8,7 +8,7 @@ import (
 	"github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
 	"github.com/docker/distribution/manifest/schema2"
-	"github.com/docker/docker/reference"
+	"github.com/docker/distribution/reference"
 )
 
 func Delete(image reference.NamedTagged, manifest distribution.Manifest) error {

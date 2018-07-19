@@ -33,7 +33,7 @@ import (
 	"github.com/docker/docker/cli/config"
 	"github.com/docker/docker/distribution"
 	"github.com/docker/docker/dockerversion"
-	"github.com/docker/docker/reference"
+	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
 	"github.com/spf13/viper"
@@ -91,7 +91,7 @@ func getRepositoryClient(image reference.Named, insecure bool, scopes ...string)
 	}
 
 	metaHeaders := map[string][]string{}
-	endpoints, err := service.LookupPullEndpoints(image.Hostname())
+	endpoints, err := service.LookupPullEndpoints(reference.Domain(image))
 	if err != nil {
 		log.Debugf("registry.LookupPullEndpoints error: %v", err)
 		return nil, err
@@ -208,11 +208,10 @@ func DownloadManifest(image string, insecure bool) (reference.NamedTagged, distl
 		return nil, nil, err
 	}
 	if reference.IsNameOnly(n) {
-		n, _ = reference.ParseNamed(image + ":" + reference.DefaultTag)
+		n, _ = reference.ParseNamed(image + ":latest")
 	}
 
 	named := n.(reference.NamedTagged)
-
 	// Create a reference to a repository client for the repo.
 	repo, err := getRepositoryClient(named, insecure, "pull")
 	if err != nil {

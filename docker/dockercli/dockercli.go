@@ -19,7 +19,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/image"
 	"github.com/docker/docker/layer"
-	"github.com/docker/docker/reference"
+	"github.com/docker/distribution/reference"
 	"github.com/jgsqware/clairctl/config"
 	"github.com/opencontainers/go-digest"
 )
@@ -35,7 +35,11 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	}
 	var image reference.NamedTagged
 	if reference.IsNameOnly(n) {
-		image = reference.WithDefaultTag(n).(reference.NamedTagged)
+		r, err := reference.WithTag(n, "latest")
+		if err != nil {
+			return nil, nil, err
+		}
+		image = r.(reference.NamedTagged)
 	} else {
 		image = n.(reference.NamedTagged)
 	}

@@ -52,7 +52,7 @@ var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockerdist"
 
 var ErrTagNotFound = errors.New("this image or tag is not found")
 
-var ecrRegex, _ = regexp.Compile(`((?P<registryId>[a-zA-Z0-9][a-zA-Z0-9_-]*)\.dkr\.ecr\.(?P<region>[a-zA-Z0-9][a-zA-Z0-9_-]*)\.amazonaws\.com(\.cn)?)(/(?P<imageName>[a-zA-Z0-9_-]+))?(:(?P<tag>[a-zA-Z0-9_\-/]+))?`)
+var ecrRegex, _ = regexp.Compile(`((?P<registryId>[a-zA-Z0-9][a-zA-Z0-9_-]*)\.dkr\.ecr\.(?P<region>[a-zA-Z0-9][a-zA-Z0-9_-]*)\.amazonaws\.com(\.cn)?)(/(?P<imageName>[a-zA-Z0-9/_-]+))?(:(?P<tag>[a-zA-Z0-9_\-/]+))?`)
 
 func isInsecureRegistry(registryHostname string) bool {
 	for _, r := range viper.GetStringSlice("docker.insecure-registries") {

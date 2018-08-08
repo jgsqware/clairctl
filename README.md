@@ -140,6 +140,59 @@ go build
 
 This will result in a `clairctl` executable in the `$GOPATH/src/github.com/jgsqware/clairctl` folder.
 
+# Build the Docker Container Locally
+
+`./local-docker.sh OPTIONAL_TAG_NAME`
+
+E.G.:
+
+Build a tagged version
+
+`./local-docker.sh jgsqware/clairctl:1.2.9`
+
+or 
+
+Build an untagged version for local development.
+
+`./local-docker.sh`
+
+# Use with ECR
+
+## Change to your ~/.aws/credentials
+
+If you are using an ECR to hold your Docker containers then you will have to add the `registry id` to your `~/.aws/credentials`
+
+E.G.:
+
+```
+    docker-compose exec clairctl clairctl report 111111111111.dkr.ecr.amazon-zone.amazonaws.com/your-company-or-grouping/your-container:docker_version
+```
+
+or 
+
+```
+    ./clairctl report 111111111111.dkr.ecr.amazon-zone.amazonaws.com/your-company-or-grouping/your-container:docker_version
+```
+
+your `~/.aws/credentials` will have to have a section for each ECR `registry id` that you use. 
+
+For the above example the `registry id ` is `111111111111`
+
+Copy the `~/.aws/credentials` for `[default]` settings to create settings for `[111111111111]`
+
+```bash
+[deafult]
+
+aws_access_key_id = YOUR_ACCESS_KEY_ID 
+aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+
+[111111111111]
+
+aws_access_key_id = YOUR_ACCESS_KEY_ID 
+aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+ 
+```
+
 # FAQ
 
 ## I get 400 errors !

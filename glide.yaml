@@ -56,3 +56,4 @@ import:
   - aws/session
   - service/ecr
   - service/ecr/ecriface
+  - aws/ec2metadata

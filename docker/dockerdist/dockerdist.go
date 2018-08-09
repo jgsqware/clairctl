@@ -17,12 +17,20 @@
 package dockerdist
 
 import (
+	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/url"
+	"os"
 	"reflect"
+	"regexp"
 
 	"strings"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/ecr"
 	"github.com/coreos/pkg/capnslog"
 	distlib "github.com/docker/distribution"
 	"github.com/docker/distribution/manifest/schema1"
@@ -36,13 +44,15 @@ import (
 	"github.com/docker/docker/reference"
 	"github.com/docker/docker/registry"
 	"github.com/opencontainers/go-digest"
-	"golang.org/x/net/context"
 	"github.com/spf13/viper"
+	"golang.org/x/net/context"
 )
 
 var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockerdist")
 
 var ErrTagNotFound = errors.New("this image or tag is not found")
+
+var ecrRegex, _ = regexp.Compile(`((?P<registryId>[a-zA-Z0-9][a-zA-Z0-9_-]*)\.dkr\.ecr\.(?P<region>[a-zA-Z0-9][a-zA-Z0-9_-]*)\.amazonaws\.com(\.cn)?)(/(?P<imageName>[a-zA-Z0-9/_-]+))?(:(?P<tag>[a-zA-Z0-9_\-/]+))?`)
 
 func isInsecureRegistry(registryHostname string) bool {
 	for _, r := range viper.GetStringSlice("docker.insecure-registries") {
@@ -181,9 +191,83 @@ func getDigest(ctx context.Context, repo distlib.Repository, image reference.Nam
 	return descriptor.Digest, nil
 }
 
+func getEcrCredentials(image string) (types.AuthConfig, error) {
+
+	names := ecrRegex.SubexpNames()
+	captures := ecrRegex.FindAllStringSubmatch(image, -1)[0]
+	namedCaptures := map[string]string{}
+
+	for i, n := range captures {
+		namedCaptures[names[i]] = n
+	}
+
+	log.Debugf("The ECR registry id is %s\n", namedCaptures["registryId"])
+
+	// configure aws client
+	sess := session.New()
+	region, err := getRegion(sess)
+	if err != nil {
+		return types.AuthConfig{}, fmt.Errorf("Error fetching AWS region: %s\n", err.Error())
+	}
+	svc := ecr.New(sess, aws.NewConfig().WithMaxRetries(10).WithRegion(region))
+	registryId := namedCaptures["registryId"]
+
+	// this lets us handle multiple registries
+	params := &ecr.GetAuthorizationTokenInput{
+		RegistryIds: []*string{&registryId},
+	}
+
+	// request the token
+	resp, err := svc.GetAuthorizationToken(params)
+	if err != nil {
+		return types.AuthConfig{}, fmt.Errorf("Error authorizing: %s\n", err.Error())
+	}
+
+	// extract base64 token
+	data, err := base64.StdEncoding.DecodeString(*resp.AuthorizationData[0].AuthorizationToken)
+	if err != nil {
+		return types.AuthConfig{}, fmt.Errorf("Error decoding autorization token: %s\n", err.Error())
+	}
+
+	// extract username and password
+	token := strings.SplitN(string(data), ":", 2)
+
+	authConfig := types.AuthConfig{
+		Username:      token[0],
+		Password:      token[1],
+		ServerAddress: captures[1],
+	}
+
+	log.Debugf("Successfully logged into ECR")
+	log.Debugf("- Username: %s", authConfig.Username)
+	log.Debugf("- ServerAddress: %s", authConfig.ServerAddress)
+
+	return authConfig, nil
+}
+
+// if AWS_REGION not set, infer from instance metadata
+func getRegion(sess *session.Session) (string, error) {
+	region, exists := os.LookupEnv("AWS_REGION")
+	if !exists {
+		ec2region, err := ec2metadata.New(sess).Region()
+		if err != nil {
+			return "", fmt.Errorf("AWS_REGION not set and unable to fetch region from instance metadata: %s\n", err.Error())
+		}
+		region = ec2region
+	}
+	return region, nil
+}
+
 // GetAuthCredentials returns the auth credentials (if any found) for the given repository, as found
 // in the user's docker config.
 func GetAuthCredentials(image string) (types.AuthConfig, error) {
+	// Check if this is an ECR image
+	ecrMatch := ecrRegex.MatchString(image)
+
+	if ecrMatch {
+		return getEcrCredentials(image)
+	}
+
 	// Lookup the index information for the name.
 	indexInfo, err := registry.ParseSearchIndexInfo(image)
 	if err != nil {

@@ -122,7 +122,9 @@ images:
 
 # Amazon AWS ECR and clairctl
 
-## Setup your .aws/credentials
+## Setup your environment for AWS ECR 
+
+### via .aws/credentials
 
 (Optional) If you choose to use your `~/.aws/credentials` file for configuration make the following changes.
 
@@ -146,6 +148,21 @@ aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
 aws_access_key_id = YOUR_ACCESS_KEY_ID 
 aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
  
+```
+
+### Via Environmental variables 
+
+#### Session_token and Access_key_id
+
+``` 
+    export AWS_SESSION_TOKEN=<token_value>
+    export AWS_ACCESS_KEY_ID=<key_value>
+```
+
+#### (OR) Secret_access_Key
+
+```
+   export AWS_SECRET_ACCESS_KEY=<secret_value>`
 ```
 
 ## Running Clairctl
@@ -181,11 +198,8 @@ You will have to choose one of 3 options on passing the AWS secrets to the docke
 Uncomment the one type you chose.
 
 1. Use `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` from environmental variables.
-    1. export AWS_ACCESS_KEY_ID=<key_value>
-    1. export AWS_SECRET_ACCESS_KEY=<secret_value>
 
 1. Use `AWS_SESSION_TOKEN` from an environmental variable
-    1. export AWS_SESSION_TOKEN=<token_value>
 
 1. Use the mounting of the `.aws` directory from your home directory. 
 
@@ -220,7 +234,7 @@ replace `amazon-zone` with the zone for your ECR
 
 #### Setup your .aws/credentials
 
-<#setup-your-awscredentials>
+[Link to setup your environment for ECR](#setup-your-environment-for-aws-ecr)
 
 #### Run the clarictl command
 

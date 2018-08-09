@@ -27,9 +27,14 @@ services:
     restart: unless-stopped
     environment: 
       - DOCKER_API_VERSION=1.24
+#     - AWS_REGION= # put your region E.G.: us-east-1, eu-west-2
+#     - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}  # (AWS credentials option 1.) Environmental variable for AWS_ACCESS_KEY_ID.
+#     - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} # (AWS credentials option 1.) Environmental variable for AWS_SECRET_ACCESS_KEY.
+#     - AWS_SESSION_TOKEN=${AWS_SESSION_TOKEN} # (AWS credentials option 2.) session token if not using (1.) user/password or (3.) mount of .aws. Environmental variable for AWS_SESSION_TOKEN.
     volumes:
       - ./docker-compose-data/clairctl-reports/:/reports/:rw
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    depends_on: 
+#     - ${HOME}/.aws:/root/.aws/  # (AWS credentials option 3.) mount AWS credentials from ~/.aws/ in your home folder
+    depends_on:
       clair: 
         condition: service_started

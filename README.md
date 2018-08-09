@@ -119,6 +119,110 @@ images:
     CVE-2016-7068: Something
 ```
 
+
+# ECR and clairctl
+
+## Setup your environment 
+
+your `~/.aws/credentials` will have to have a section for each ECR `registry id` that you use. 
+
+For the below example the `registry id ` is `111111111111`
+
+Copy the `~/.aws/credentials` for `[default]` settings to create settings for `[111111111111]`
+
+E.G.:
+
+```bash
+
+[deafult]
+
+aws_access_key_id = YOUR_ACCESS_KEY_ID 
+aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+
+[111111111111]
+
+aws_access_key_id = YOUR_ACCESS_KEY_ID 
+aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
+ 
+```
+
+## Running Clairctl
+
+### Docker-Compose
+
+You can use the `docker-compose.yml` file that you can use to help start the 3 containers needed up.
+
+#### AWS configuration
+
+##### Set AWS_REGION from environmental variable 
+
+<https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html>
+
+replace `amazon-zone` with the zone for your ECR
+
+`export AWS_REGION=amazon-zone # e.g.: us-east-1 or eu-west-2`
+
+##### Set AWS_REGION in docker-compose.yml
+  
+Uncomment the following entry in the `clairctl:` `environment:` of and add the value of your ECR region. 
+
+`#    - AWS_REGION= # put your region E.G.: us-east-1, eu-west-2 `
+
+E.G:
+
+`     - AWS_REGION=us-east-1 # put your region E.G.: us-east-1, eu-west-2 `
+
+##### Pass AWS Secrets to docker container 
+
+You will have to choose one of 3 options on passing the AWS secrets to the docker container.
+ 
+Uncomment the one type you chose.
+
+1. Use `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` from environmental variables.
+    1. export AWS_ACCESS_KEY_ID=<key_value>
+    1. export AWS_SECRET_ACCESS_KEY=<secret_value>
+
+1. Use `AWS_SESSION_TOKEN` from an environmental variable
+    1. export AWS_SESSION_TOKEN=<token_value>
+
+1. Use the mounting of the `.aws` directory from your home directory. 
+
+
+#### Run Docker-compose  
+
+Start the 3 container
+
+` docker-compose up -d`
+
+#### Run commands against the clairctl docker instance.
+
+```
+    docker-compose exec clairctl clairctl COMMAND AWS_ECR_URL/your-company-or-grouping/your-container:docker_version
+```
+
+E.G.:
+
+```
+    docker-compose exec clairctl clairctl pull 111111111111.dkr.ecr.amazon-zone.amazonaws.com/your-company-or-grouping/your-container:docker_version
+```
+
+### Command line 
+
+#### Set AWS_REGION for go command line 
+
+<https://docs.aws.amazon.com/sdk-for-go/v1/developer-guide/configuring-sdk.html>
+
+replace `amazon-zone` with the zone for your ECR
+
+`export AWS_REGION=amazon-zone # e.g.: us-east-1 or eu-west-2`
+
+#### Run the clarictl command
+
+```
+    ./clairctl pull 111111111111.dkr.ecr.amazon-zone.amazonaws.com/your-company-or-grouping/your-container:docker_version
+```
+
+
 # Building the latest binaries
 
 **clairctl** requires Go 1.8+.
@@ -140,7 +244,17 @@ go build
 
 This will result in a `clairctl` executable in the `$GOPATH/src/github.com/jgsqware/clairctl` folder.
 
-# Build the Docker Container Locally
+# Build the Docker Container from Source Locally
+
+If you are making modifications to the source code and want to test it locally there is another docker file `LocalDockerfile`
+
+The project `Dockerfile` downloads a zip file of the source from the project from github.
+ 
+`https://github.com/jgsqware/clairctl/archive/master.zip`
+
+You will never see your local changes persisted into the container if you use `docker build .`
+
+There is a script to help building from the source.  
 
 `./local-docker.sh OPTIONAL_TAG_NAME`
 
@@ -156,42 +270,7 @@ Build an untagged version for local development.
 
 `./local-docker.sh`
 
-# Use with ECR
-
-## Change to your ~/.aws/credentials
-
-If you are using an ECR to hold your Docker containers then you will have to add the `registry id` to your `~/.aws/credentials`
-
-E.G.:
-
-```
-    docker-compose exec clairctl clairctl report 111111111111.dkr.ecr.amazon-zone.amazonaws.com/your-company-or-grouping/your-container:docker_version
-```
-
-or 
-
-```
-    ./clairctl report 111111111111.dkr.ecr.amazon-zone.amazonaws.com/your-company-or-grouping/your-container:docker_version
-```
-
-your `~/.aws/credentials` will have to have a section for each ECR `registry id` that you use. 
-
-For the above example the `registry id ` is `111111111111`
-
-Copy the `~/.aws/credentials` for `[default]` settings to create settings for `[111111111111]`
-
-```bash
-[deafult]
-
-aws_access_key_id = YOUR_ACCESS_KEY_ID 
-aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
-
-[111111111111]
-
-aws_access_key_id = YOUR_ACCESS_KEY_ID 
-aws_secret_access_key = YOUR_SECRET_ACCESS_KEY
- 
-```
+Make sure to change the tag for clairctl in your local docker-compose.yml if you have built a different tagged version.
 
 # FAQ
 

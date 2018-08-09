@@ -220,7 +220,7 @@ replace `amazon-zone` with the zone for your ECR
 
 #### Setup your .aws/credentials
 
-[#Setup-your-.aws/credentials]
+<#setup-your-awscredentials>
 
 #### Run the clarictl command
 

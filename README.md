@@ -120,11 +120,13 @@ images:
 ```
 
 
-# ECR and clairctl
+# Amazon AWS ECR and clairctl
 
-## Setup your environment 
+## Setup your .aws/credentials
 
-your `~/.aws/credentials` will have to have a section for each ECR `registry id` that you use. 
+(Optional) If you choose to use your `~/.aws/credentials` file for configuration make the following changes.
+
+Your `~/.aws/credentials` you wwill have to add a section for each ECR `registry id` that you use. 
 
 For the below example the `registry id ` is `111111111111`
 
@@ -215,6 +217,10 @@ E.G.:
 replace `amazon-zone` with the zone for your ECR
 
 `export AWS_REGION=amazon-zone # e.g.: us-east-1 or eu-west-2`
+
+#### Setup your .aws/credentials
+
+[#Setup-your-.aws/credentials]
 
 #### Run the clarictl command
 

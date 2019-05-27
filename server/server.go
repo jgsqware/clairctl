@@ -58,7 +58,8 @@ func restrictedFileServer(path string) http.Handler {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		os.Mkdir(path, 0777)
 	}
-
+	fmt.Printf("#################out")
+    	fmt.Printf("path is %s\n", path)
 	fc := func(w http.ResponseWriter, r *http.Request) {
 		http.FileServer(http.Dir(path)).ServeHTTP(w, r)
 	}

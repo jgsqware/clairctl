@@ -63,7 +63,6 @@ func pushLayer(layer v1.LayerEnvelope) error {
 	}
 
 	lJSON, err := json.Marshal(layer)
-	fmt.Printf("lJSON is %s\n", lJSON)
 	if err != nil {
 		return fmt.Errorf("marshalling layer: %v", err)
 	}

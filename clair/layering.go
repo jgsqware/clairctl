@@ -63,10 +63,6 @@ func (layers *layering) pushAll() error {
 		if config.IsLocal {
 			//local := layers.hURL + "/" + layers.image.Hostname()
 			local := layers.hURL
-			fmt.Printf("!!!!!!!!!local url is %s\n", local)
-                        fmt.Printf("image hostname is  %s\n", layers.image.Hostname())
-                        fmt.Printf("local url  without layers.image.Hostname is %s\n", layers.hURL)
-
 			payload.Layer.Path = strings.Replace(payload.Layer.Path, u.String(), local, 1)
 			payload.Layer.Path += "/layer.tar"
 		}
@@ -74,7 +70,6 @@ func (layers *layering) pushAll() error {
 		if err := pushLayer(payload); err != nil {
 			log.Infof("adding layer %d/%d [%v]: %v", index+1, layerCount, lUID, err)
 			if err != ErrUnanalizedLayer {
-				fmt.Printf("ERROR ADDING LAYER\n")
 				return err
 			}
 			layers.parentID = ""

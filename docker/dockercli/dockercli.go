@@ -5,6 +5,7 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -45,7 +46,6 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 		manifest, err = save(image.Name() + ":" + image.Tag())
 	} else {
 		manifest, err = historyFromCommand(image.Name() + ":" + image.Tag())
-		
 	}
 
 	if err != nil {
@@ -92,7 +92,6 @@ func save(imageName string) (distribution.Manifest, error) {
 	cli, err := client.NewEnvClient()
 	if err != nil {
 		panic(err)
-		fmt.Printf("err is %s\n", err)
 	}
 
 	img, err := cli.ImageSave(context.Background(), []string{imageName})

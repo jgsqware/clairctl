@@ -5,7 +5,6 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -27,7 +26,6 @@ var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockercli")
 
 //GetLocalManifest retrieve manifest for local image
 func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
-	fmt.Printf("1--get local manifest image name is %s\n", imageName)
 	n, err := reference.ParseNamed(imageName)
 	if err != nil {
 		return nil, nil, err
@@ -35,10 +33,8 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	var image reference.NamedTagged
 	if reference.IsNameOnly(n) {
 		image = reference.WithDefaultTag(n).(reference.NamedTagged)
-		fmt.Printf("2--ref was true, %s image\n", image)
 	} else {
 		image = n.(reference.NamedTagged)
-		fmt.Printf("2--ref was false, %s image\n", image)
 		
 	}
 	if err != nil {
@@ -47,24 +43,17 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	var manifest distribution.Manifest
 	if withExport {
 		manifest, err = save(image.Name() + ":" + image.Tag())
-		fmt.Printf("type of manifest is %T\n", manifest)
-		fmt.Printf("5--withExport, manifest equals %s\n", manifest)
-        	fmt.Printf("6--err equals %s\n", err)
 	} else {
 		manifest, err = historyFromCommand(image.Name() + ":" + image.Tag())
-		fmt.Printf("!withExport, manifest equals %s\n", manifest)
 		
 	}
 
 	if err != nil {
-		fmt.Printf("error not nil\n")
 		return nil, schema1.SignedManifest{}, err
 	}
 	m := manifest.(schema1.SignedManifest)
 	m.Name = image.Name()
 	m.Tag = image.Tag()
-	fmt.Printf("7--image is %s\n", image)
-    	fmt.Printf("8--manifest is %s\n", m) 
 	
 	return image, m, err
 }
@@ -84,9 +73,7 @@ func saveImage(imageName string, fo *os.File) error {
 }
 
 func save(imageName string) (distribution.Manifest, error) {
-	fmt.Printf("3--image name is %s\n", imageName)
 	path := config.TmpLocal() + "/" + strings.Split(imageName, ":")[0] + "/blobs"
-	fmt.Printf("4--path is %s\n", path)
 	if _, err := os.Stat(path); os.IsExist(err) {
 		err := os.RemoveAll(path)
 		if err != nil {
@@ -139,7 +126,6 @@ func save(imageName string) (distribution.Manifest, error) {
 		if n == 0 {
 			break
 		}
-
 		// write a chunk
 		if _, err := fo.Write(buf[:n]); err != nil {
 			log.Error(err)

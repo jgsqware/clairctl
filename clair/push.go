@@ -63,6 +63,7 @@ func pushLayer(layer v1.LayerEnvelope) error {
 	}
 
 	lJSON, err := json.Marshal(layer)
+	fmt.Printf("lJSON is %s\n", lJSON)
 	if err != nil {
 		return fmt.Errorf("marshalling layer: %v", err)
 	}
@@ -124,7 +125,7 @@ func blobsURI(registry string, name string, digest string) string {
 }
 
 func insertRegistryMapping(layerDigest string, registryURI string) {
-
+	fmt.Printf("lJSON is %s\n", lJSON)
 	hostURL, _ := dockerdist.GetPushURL(registryURI)
 	log.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
 	registryMapping[layerDigest] = hostURL.String()

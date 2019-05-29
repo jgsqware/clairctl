@@ -124,7 +124,6 @@ func blobsURI(registry string, name string, digest string) string {
 }
 
 func insertRegistryMapping(layerDigest string, registryURI string) {
-
 	hostURL, _ := dockerdist.GetPushURL(registryURI)
 	log.Debugf("Saving %s[%s]", layerDigest, hostURL.String())
 	registryMapping[layerDigest] = hostURL.String()

@@ -59,9 +59,10 @@ func (layers *layering) pushAll() error {
 			Format:     "Docker",
 		}}
 
-		//FIXME Update to TLS
 		if config.IsLocal {
-			local := layers.hURL + "/" + layers.image.Hostname()
+			// Fixed local path issue that arose when docker image provided was tagged 
+			// Deleted portion of local URL that was adding '/docker.io/'to the path 
+			local := layers.hURL
 			payload.Layer.Path = strings.Replace(payload.Layer.Path, u.String(), local, 1)
 			payload.Layer.Path += "/layer.tar"
 		}

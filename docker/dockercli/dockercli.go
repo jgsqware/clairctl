@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
-
+	
 	"github.com/artyom/untar"
 	"github.com/coreos/pkg/capnslog"
 	"github.com/docker/distribution"
@@ -27,7 +27,7 @@ var log = capnslog.NewPackageLogger("github.com/jgsqware/clairctl", "dockercli")
 
 //GetLocalManifest retrieve manifest for local image
 func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged, distribution.Manifest, error) {
-
+	
 	n, err := reference.ParseNamed(imageName)
 	if err != nil {
 		return nil, nil, err
@@ -36,7 +36,7 @@ func GetLocalManifest(imageName string, withExport bool) (reference.NamedTagged,
 	if reference.IsNameOnly(n) {
 		image = reference.WithDefaultTag(n).(reference.NamedTagged)
 	} else {
-		image = n.(reference.NamedTagged)
+		image = n.(reference.NamedTagged)	
 	}
 	if err != nil {
 		return nil, nil, err
@@ -73,7 +73,7 @@ func saveImage(imageName string, fo *os.File) error {
 
 func save(imageName string) (distribution.Manifest, error) {
 	path := config.TmpLocal() + "/" + strings.Split(imageName, ":")[0] + "/blobs"
-
+	
 	if _, err := os.Stat(path); os.IsExist(err) {
 		err := os.RemoveAll(path)
 		if err != nil {
@@ -125,7 +125,7 @@ func save(imageName string) (distribution.Manifest, error) {
 		if n == 0 {
 			break
 		}
-
+		
 		// write a chunk
 		if _, err := fo.Write(buf[:n]); err != nil {
 			log.Error(err)
